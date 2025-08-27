@@ -3,10 +3,10 @@ from typing import List, Dict, Any, Optional, Tuple
 from collections import defaultdict
 import calendar
 import logging
-from models import (
+from models.models import (
     ComplianceStatus, DataQualityIssue, DataQualityIssueType,
     DailyAttendance, WeeklyPattern, MonthlyStats, DashboardStats,
-    EmployeeTrends, TrendData, DepartmentStats
+    TrendData, EmployeeTrends, DepartmentStats
 )
 
 logger = logging.getLogger(__name__)
