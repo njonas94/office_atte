@@ -17,6 +17,7 @@ RUN wget https://download.oracle.com/otn_software/linux/instantclient/1919000/in
 # Set environment variables
 ENV LD_LIBRARY_PATH=/opt/oracle/instantclient_19_19:$LD_LIBRARY_PATH
 ENV TNS_ADMIN=/opt/oracle/instantclient/network/admin
+ENV PYTHONPATH="/app"
 
 # Set working directory
 WORKDIR /app

@@ -1,6 +1,8 @@
 # Copia del requirements.txt original
 uvicorn[standard]
 fastapi
-schedule
+cx_Oracle
+pandas
+redis
 pandas
 redis
