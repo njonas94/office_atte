@@ -8,7 +8,7 @@ import json
 import os
 from app.db.database_manager import DatabaseManager
 from app.models.models import AttendanceStats, DataQualityIssue, MonthlyReport
-from services.attendance_analyzer import AttendanceAnalyzer
+from app.services.attendance_analyzer import AttendanceAnalyzer
 from services.report_generator import ReportGenerator
 from api.routes import employees
 from core.config import settings
