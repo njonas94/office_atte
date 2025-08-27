@@ -6,7 +6,7 @@ from typing import List, Optional, Dict, Any
 import pandas as pd
 import json
 import os
-from db.database_manager import DatabaseManager
+from app.db.database_manager import DatabaseManager
 from models.models import AttendanceStats, DataQualityIssue, MonthlyReport
 from services.attendance_analyzer import AttendanceAnalyzer
 from services.report_generator import ReportGenerator

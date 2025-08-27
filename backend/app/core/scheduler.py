@@ -3,7 +3,7 @@ import time
 import redis
 import logging
 from datetime import datetime
-from database import DatabaseManager
+from app.db.database_manager import DatabaseManager
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
