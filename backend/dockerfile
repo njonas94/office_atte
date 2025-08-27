@@ -4,6 +4,7 @@ FROM python:3.11-slim
 RUN apt-get update && apt-get install -y \
     wget \
     unzip \
+    libaio1 \
     libaio-dev \
     gcc \
     python3-dev \
@@ -15,6 +16,9 @@ RUN wget https://download.oracle.com/otn_software/linux/instantclient/1919000/in
     && unzip instantclient-basic-linux.x64-19.19.0.0.0dbru.zip \
     && rm instantclient-basic-linux.x64-19.19.0.0.0dbru.zip \
     && mkdir -p /opt/oracle/instantclient/network/admin
+
+# Show libaio.so.1 location for debugging
+RUN find / -name libaio.so.1 || true
 
 # Create symlink for libaio.so.1 after Oracle Instant Client is installed
 RUN ln -s /lib/x86_64-linux-gnu/libaio.so.1 /opt/oracle/instantclient_19_19/libaio.so.1 2>/dev/null || \
