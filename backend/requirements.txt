@@ -1,2 +1,4 @@
 # Copia del requirements.txt original
 uvicorn[standard]
+fastapi
+schedule
