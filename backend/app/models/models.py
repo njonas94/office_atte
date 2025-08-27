@@ -112,3 +112,9 @@ class DepartmentStats(BaseModel):
     average_compliance_rate: float
     average_hours_per_employee: float
     total_data_issues: int
+
+class Persona(BaseModel):
+    ID_PERSONA: int
+    NOMBRE: str
+    APELLIDO: str
+    NUMERO_DOCUMENTO: str | None

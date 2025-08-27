@@ -6,10 +6,12 @@ from typing import List, Optional, Dict, Any
 import pandas as pd
 import json
 import os
-from database import DatabaseManager
-from models import EmployeeAttendance, AttendanceStats, DataQualityIssue, MonthlyReport
-from attendance_analyzer import AttendanceAnalyzer
-from report_generator import ReportGenerator
+from db.database_manager import DatabaseManager
+from models.models import EmployeeAttendance, AttendanceStats, DataQualityIssue, MonthlyReport
+from services.attendance_analyzer import AttendanceAnalyzer
+from services.report_generator import ReportGenerator
+from api.routes import employees
+from core.config import settings
 
 app = FastAPI(title="Office Attendance")
 

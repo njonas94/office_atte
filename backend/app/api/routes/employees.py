@@ -1,29 +1,33 @@
 from typing import List, Optional
 from fastapi import APIRouter, Query
-from pydantic import BaseModel
+from ...db.database_manager import DatabaseManager
+from ...models.models import EmployeeInfo
 
 router = APIRouter()
+db_manager = DatabaseManager()
 
-class Employee(BaseModel):
-    id: int
-    name: str
-    department: str
-    attendance_days: int
-
-# Temporal hasta conectar a Oracle
-_FAKE = [
-    Employee(id=1, name="Juan Pérez", department="IT", attendance_days=4),
-    Employee(id=2, name="María Gómez", department="HR", attendance_days=2),
-]
-
-@router.get("/employees", response_model=List[Employee])
-def list_employees(
-    department: Optional[str] = Query(None),
-    min_days: Optional[int] = Query(None, ge=0)
+@router.get("/search", response_model=List[EmployeeInfo])
+async def search_personas(
+    ids: Optional[List[int]] = Query(None, description="IDs de personas"),
+    apellido: Optional[str] = Query(None, description="Apellido (puede ser parcial)")
 ):
-    data = _FAKE
-    if department:
-        data = [e for e in data if e.department.lower() == department.lower()]
-    if min_days is not None:
-        data = [e for e in data if e.attendance_days >= min_days]
-    return data
+    """
+    Buscar personas por ID(s) y/o Apellido (parcial).
+    """
+    query = "SELECT ID_PERSONA, NOMBRE, APELLIDO, DEPARTAMENTO, EMAIL FROM CRONOS.PERSONA WHERE 1=1"
+    params = {}
+    if ids:
+        query += " AND ID_PERSONA IN ({})".format(','.join([f":id{i}" for i in range(len(ids))]))
+        for i, id_val in enumerate(ids):
+            params[f"id{i}"] = id_val
+    if apellido:
+        query += " AND LOWER(APELLIDO) LIKE :apellido"
+        params["apellido"] = f"%{apellido.lower()}%"
+    # Conexión y consulta
+    await db_manager.connect()
+    cursor = db_manager.connection.cursor()
+    cursor.execute(query, params)
+    columns = [col[0] for col in cursor.description]
+    rows = [dict(zip(columns, row)) for row in cursor.fetchall()]
+    await db_manager.disconnect()
+    return [EmployeeInfo(**row) for row in rows]
