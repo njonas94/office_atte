@@ -6,13 +6,13 @@ services:
     ports:
       - "8000:8000"
     environment:
-      - ORACLE_TNS=${ORACLE_TNS}
       - ORACLE_USER=${ORACLE_USER}
       - ORACLE_PASSWORD=${ORACLE_PASSWORD}
-      - ORACLE_DSN=${ORACLE_DSN}
+      - ORACLE_HOST=${ORACLE_HOST}
+      - ORACLE_PORT=${ORACLE_PORT}
+      - ORACLE_SERVICE_NAME=${ORACLE_SERVICE_NAME}
     volumes:
       - ./backend:/app
-      - ./tnsnames.ora:/opt/oracle/instantclient/network/admin/tnsnames.ora:ro
     depends_on:
       - redis
     restart: unless-stopped
@@ -35,13 +35,13 @@ services:
     build: ./backend
     command: python scheduler.py
     environment:
-      - ORACLE_TNS=${ORACLE_TNS}
       - ORACLE_USER=${ORACLE_USER}
       - ORACLE_PASSWORD=${ORACLE_PASSWORD}
-      - ORACLE_DSN=${ORACLE_DSN}
+      - ORACLE_HOST=${ORACLE_HOST}
+      - ORACLE_PORT=${ORACLE_PORT}
+      - ORACLE_SERVICE_NAME=${ORACLE_SERVICE_NAME}
     volumes:
       - ./backend:/app
-      - ./tnsnames.ora:/opt/oracle/instantclient/network/admin/tnsnames.ora:ro
     depends_on:
       - redis
       - backend
