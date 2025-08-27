@@ -1,7 +1,7 @@
 from typing import List, Optional
 from fastapi import APIRouter, Query
-from ...db.database_manager import DatabaseManager
-from ...models.models import EmployeeInfo
+from db.database_manager import DatabaseManager
+from models.models import EmployeeInfo
 
 router = APIRouter()
 db_manager = DatabaseManager()

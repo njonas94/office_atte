@@ -90,12 +90,12 @@ async def get_monthly_compliance(year: int, month: int):
 @app.get("/api/employee-stats/{employee_id}/{year}/{month}")
 async def get_employee_monthly_stats(employee_id: int, year: int, month: int):
     """Get detailed monthly statistics for a specific employee"""
-    try:
+        from api.routes.employees import router as employees_router
         stats = await analyzer.analyze_employee_month(employee_id, year, month)
         return stats
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-
+        app.include_router(employees_router, prefix="/api", tags=["Employees"])
 @app.get("/api/data-quality-issues")
 async def get_data_quality_issues(
     start_date: Optional[str] = Query(None),
