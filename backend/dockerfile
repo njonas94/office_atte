@@ -19,6 +19,9 @@ RUN wget https://download.oracle.com/otn_software/linux/instantclient/1919000/in
 # Show libaio.so.1 location for debugging
 RUN find / -name libaio.so.1 || true
 
+# Create symlink using the most probable path
+RUN ln -sf /usr/lib/x86_64-linux-gnu/libaio.so.1 /opt/oracle/instantclient_19_19/libaio.so.1 || true
+
 # Create symlink for libaio.so.1 after Oracle Instant Client is installed
 RUN ln -s /lib/x86_64-linux-gnu/libaio.so.1 /opt/oracle/instantclient_19_19/libaio.so.1 2>/dev/null || \
     ln -s /usr/lib/x86_64-linux-gnu/libaio.so.1 /opt/oracle/instantclient_19_19/libaio.so.1 2>/dev/null || \
