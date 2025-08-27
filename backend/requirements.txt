@@ -11,3 +11,6 @@ schedule==1.2.0
 pydantic==2.5.0
 datetime==5.3
 openpyxl==3.1.2
+ pydantic-settings==2.0.3
+openpyxl-styles==1.0.0
+openpyxl-utils==1.0.0
