@@ -11,7 +11,13 @@ from models import EmployeeAttendance, AttendanceStats, DataQualityIssue, Monthl
 from attendance_analyzer import AttendanceAnalyzer
 from report_generator import ReportGenerator
 
-app = FastAPI(title="Employee Attendance Dashboard", version="1.0.0")
+app = FastAPI(title="Office Attendance")
+
+app.include_router(employees.router, prefix="/api", tags=["Employees"])
+
+@app.get("/health")
+def health():
+    return {"status": "ok"}
 
 # CORS middleware
 app.add_middleware(
