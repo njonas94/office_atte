@@ -9,6 +9,8 @@ RUN apt-get update && apt-get install -y \
     python3-dev \
     && rm -rf /var/lib/apt/lists/*
 RUN ln -s /usr/lib/libaio.so.1 /opt/oracle/instantclient_19_19/libaio.so.1 || true
+RUN ln -s /lib/x86_64-linux-gnu/libaio.so.1 /opt/oracle/instantclient_19_19/libaio.so.1 || \
+    ln -s /usr/lib/libaio.so.1 /opt/oracle/instantclient_19_19/libaio.so.1 || true
 
 # Download and install Oracle Instant Client
 WORKDIR /opt/oracle

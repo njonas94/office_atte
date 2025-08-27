@@ -3,7 +3,7 @@ from typing import List, Dict, Any, Optional, Tuple
 from collections import defaultdict
 import calendar
 import logging
-from models.models import (
+from app.models.models import (
     ComplianceStatus, DataQualityIssue, DataQualityIssueType,
     DailyAttendance, WeeklyPattern, MonthlyStats, DashboardStats,
     TrendData, EmployeeTrends, DepartmentStats
