@@ -1,0 +1,35 @@
+FROM python:3.11-slim
+
+# Install Oracle Instant Client dependencies
+RUN apt-get update && apt-get install -y \
+    wget \
+    unzip \
+    libaio1 \
+    && rm -rf /var/lib/apt/lists/*
+
+# Download and install Oracle Instant Client
+WORKDIR /opt/oracle
+RUN wget https://download.oracle.com/otn_software/linux/instantclient/1919000/instantclient-basic-linux.x64-19.19.0.0.0dbru.zip \
+    && unzip instantclient-basic-linux.x64-19.19.0.0.0dbru.zip \
+    && rm instantclient-basic-linux.x64-19.19.0.0.0dbru.zip \
+    && mkdir -p /opt/oracle/instantclient/network/admin
+
+# Set environment variables
+ENV LD_LIBRARY_PATH=/opt/oracle/instantclient_19_19:$LD_LIBRARY_PATH
+ENV TNS_ADMIN=/opt/oracle/instantclient/network/admin
+
+# Set working directory
+WORKDIR /app
+
+# Copy requirements and install Python dependencies
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy application code
+COPY . .
+
+# Expose port
+EXPOSE 8000
+
+# Command to run the application
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]

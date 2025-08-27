@@ -1,0 +1,48 @@
+version: '3.8'
+
+services:
+  backend:
+    build: ./backend
+    ports:
+      - "8000:8000"
+    environment:
+      - ORACLE_TNS=${ORACLE_TNS}
+      - ORACLE_USER=${ORACLE_USER}
+      - ORACLE_PASSWORD=${ORACLE_PASSWORD}
+      - ORACLE_DSN=${ORACLE_DSN}
+    volumes:
+      - ./backend:/app
+      - ./tnsnames.ora:/opt/oracle/instantclient/network/admin/tnsnames.ora:ro
+    depends_on:
+      - redis
+    restart: unless-stopped
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    restart: unless-stopped
+
+  scheduler:
+    build: ./backend
+    command: python scheduler.py
+    environment:
+      - ORACLE_TNS=${ORACLE_TNS}
+      - ORACLE_USER=${ORACLE_USER}
+      - ORACLE_PASSWORD=${ORACLE_PASSWORD}
+      - ORACLE_DSN=${ORACLE_DSN}
+    volumes:
+      - ./backend:/app
+      - ./tnsnames.ora:/opt/oracle/instantclient/network/admin/tnsnames.ora:ro
+    depends_on:
+      - redis
+      - backend
+    restart: unless-stopped
