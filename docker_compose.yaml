@@ -33,7 +33,7 @@ services:
 
   scheduler:
     build: ./backend
-  command: python app/core/scheduler.py
+    command: python app/core/scheduler.py
     environment:
       - ORACLE_USER=${ORACLE_USER}
       - ORACLE_PASSWORD=${ORACLE_PASSWORD}
