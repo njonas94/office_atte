@@ -8,10 +8,6 @@ RUN apt-get update && apt-get install -y \
     gcc \
     python3-dev \
     && rm -rf /var/lib/apt/lists/*
-RUN ln -s /usr/lib/libaio.so.1 /opt/oracle/instantclient_19_19/libaio.so.1 || true
-RUN ln -s /lib/x86_64-linux-gnu/libaio.so.1 /opt/oracle/instantclient_19_19/libaio.so.1 || \
-    ln -s /usr/lib/libaio.so.1 /opt/oracle/instantclient_19_19/libaio.so.1 || true
-RUN ln -s /lib/libaio.so.1 /opt/oracle/instantclient_19_19/libaio.so.1 || true
 
 # Download and install Oracle Instant Client
 WORKDIR /opt/oracle
@@ -19,6 +15,12 @@ RUN wget https://download.oracle.com/otn_software/linux/instantclient/1919000/in
     && unzip instantclient-basic-linux.x64-19.19.0.0.0dbru.zip \
     && rm instantclient-basic-linux.x64-19.19.0.0.0dbru.zip \
     && mkdir -p /opt/oracle/instantclient/network/admin
+
+# Create symlink for libaio.so.1 after Oracle Instant Client is installed
+RUN ln -s /lib/x86_64-linux-gnu/libaio.so.1 /opt/oracle/instantclient_19_19/libaio.so.1 2>/dev/null || \
+    ln -s /usr/lib/x86_64-linux-gnu/libaio.so.1 /opt/oracle/instantclient_19_19/libaio.so.1 2>/dev/null || \
+    ln -s /usr/lib/libaio.so.1 /opt/oracle/instantclient_19_19/libaio.so.1 2>/dev/null || \
+    ln -s /lib/libaio.so.1 /opt/oracle/instantclient_19_19/libaio.so.1 2>/dev/null || true
 
 # Set environment variables
 ENV LD_LIBRARY_PATH=/opt/oracle/instantclient_19_19:$LD_LIBRARY_PATH
