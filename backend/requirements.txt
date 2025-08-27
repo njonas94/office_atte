@@ -2,3 +2,5 @@
 uvicorn[standard]
 fastapi
 schedule
+pandas
+redis
