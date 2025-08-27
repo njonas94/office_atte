@@ -7,7 +7,7 @@ import pandas as pd
 import json
 import os
 from app.db.database_manager import DatabaseManager
-from models.models import AttendanceStats, DataQualityIssue, MonthlyReport
+from app.models.models import AttendanceStats, DataQualityIssue, MonthlyReport
 from services.attendance_analyzer import AttendanceAnalyzer
 from services.report_generator import ReportGenerator
 from api.routes import employees

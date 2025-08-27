@@ -4,5 +4,6 @@ fastapi
 cx_Oracle
 pandas
 redis
+schedule
 pandas
 redis
