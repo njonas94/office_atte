@@ -1,17 +1,13 @@
+# Use a Python slim image // prueba para el cambio
 FROM python:3.11-slim
 
 # Install Oracle Instant Client dependencies
 RUN apt-get update && apt-get install -y \
     wget \
     unzip \
-    libaio-dev \
     gcc \
     python3-dev \
     && rm -rf /var/lib/apt/lists/*
-RUN ln -s /usr/lib/libaio.so.1 /opt/oracle/instantclient_19_19/libaio.so.1 || true
-RUN ln -s /lib/x86_64-linux-gnu/libaio.so.1 /opt/oracle/instantclient_19_19/libaio.so.1 || \
-    ln -s /usr/lib/libaio.so.1 /opt/oracle/instantclient_19_19/libaio.so.1 || true
-RUN ln -s /lib/libaio.so.1 /opt/oracle/instantclient_19_19/libaio.so.1 || true
 
 # Download and install Oracle Instant Client
 WORKDIR /opt/oracle
@@ -20,22 +16,25 @@ RUN wget https://download.oracle.com/otn_software/linux/instantclient/1919000/in
     && rm instantclient-basic-linux.x64-19.19.0.0.0dbru.zip \
     && mkdir -p /opt/oracle/instantclient/network/admin
 
-# Set environment variables
+# Set environment variables for the Oracle client
 ENV LD_LIBRARY_PATH=/opt/oracle/instantclient_19_19:$LD_LIBRARY_PATH
 ENV TNS_ADMIN=/opt/oracle/instantclient/network/admin
-ENV PYTHONPATH="/app"
 
-# Set working directory
+# Set the working directory for your application
 WORKDIR /app
 
-COPY requirements.txt .
+# Set the PYTHONPATH to include the /app directory
+ENV PYTHONPATH=/app
+
+# Copy the requirements file and install dependencies
+COPY ./requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy application code
-COPY . .
+# Copy your application code
+COPY ./app ./app
 
-# Expose port
+# Expose the application port
 EXPOSE 8000
 
-# Command to run the application
+# This CMD now correctly points to the 'app' directory
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]

@@ -1,0 +1,43 @@
+services:
+  backend:
+    build: ./backend
+    ports:
+      - "8000:8000"
+    environment:
+      - ORACLE_USER=${ORACLE_USER}
+      - ORACLE_PASSWORD=${ORACLE_PASSWORD}
+      - ORACLE_HOST=${ORACLE_HOST}
+      - ORACLE_PORT=${ORACLE_PORT}
+      - ORACLE_SERVICE_NAME=${ORACLE_SERVICE_NAME}
+    depends_on:
+      - redis
+    restart: unless-stopped
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    restart: unless-stopped
+
+  scheduler:
+    build: ./backend
+    # This command now correctly points to the scheduler script
+    command: python /app/app/core/scheduler.py
+    environment:
+      - ORACLE_USER=${ORACLE_USER}
+      - ORACLE_PASSWORD=${ORACLE_PASSWORD}
+      - ORACLE_HOST=${ORACLE_HOST}
+      - ORACLE_PORT=${ORACLE_PORT}
+      - ORACLE_SERVICE_NAME=${ORACLE_SERVICE_NAME}
+    depends_on:
+      - redis
+      - backend
+    restart: unless-stopped
