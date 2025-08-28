@@ -1,4 +1,19 @@
-FROM python:3.11-slim
+FROM oracleinanutshell/oracle-instantclient:latest
+
+# Instala Python y dependencias necesarias
+RUN apt-get update && apt-get install -y python3 python3-pip python3-dev gcc
+
+# Set working directory
+WORKDIR /app
+
+COPY requirements.txt .
+RUN pip3 install --no-cache-dir -r requirements.txt
+
+# Copy application code
+COPY . .
+
+# Command to run the scheduler
+CMD ["python3", "app/core/scheduler.py"]
 
 # Install Oracle Instant Client dependencies
 RUN apt-get update && apt-get install -y \
