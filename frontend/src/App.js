@@ -1,10 +1,84 @@
-import React from "react";
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+import './App.css';
 
 function App() {
+  const [employees, setEmployees] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    fetchEmployees();
+  }, []);
+
+  const fetchEmployees = async () => {
+    try {
+      setLoading(true);
+      const response = await axios.get('/api/employees');
+      setEmployees(response.data);
+      setError(null);
+    } catch (err) {
+      setError('Error al cargar empleados: ' + err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="app">
+        <div className="loading">Cargando...</div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="app">
+        <div className="error">{error}</div>
+        <button onClick={fetchEmployees}>Reintentar</button>
+      </div>
+    );
+  }
+
   return (
-    <div>
-      <h1>Office Attendance Dashboard</h1>
-      <p>¡La aplicación React está funcionando!</p>
+    <div className="app">
+      <header className="header">
+        <h1>Dashboard de Asistencia</h1>
+        <p>Gestión de empleados y control de asistencia</p>
+      </header>
+      
+      <main className="main">
+        <section className="stats-section">
+          <h2>Resumen General</h2>
+          <div className="stats-grid">
+            <div className="stat-card">
+              <h3>Total Empleados</h3>
+              <p className="stat-number">{employees.length}</p>
+            </div>
+            <div className="stat-card">
+              <h3>Departamentos</h3>
+              <p className="stat-number">
+                {new Set(employees.map(emp => emp.DEPARTAMENTO)).size}
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <section className="employees-section">
+          <h2>Lista de Empleados</h2>
+          <div className="employees-grid">
+            {employees.map((employee) => (
+              <div key={employee.ID_PERSONA} className="employee-card">
+                <h3>{employee.NOMBRE} {employee.APELLIDO}</h3>
+                <p><strong>ID:</strong> {employee.ID_PERSONA}</p>
+                <p><strong>Departamento:</strong> {employee.DEPARTAMENTO || 'N/A'}</p>
+                <p><strong>Email:</strong> {employee.EMAIL || 'N/A'}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+      </main>
     </div>
   );
 }

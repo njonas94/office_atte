@@ -10,8 +10,8 @@ from app.db.database_manager import DatabaseManager
 from app.models.models import AttendanceStats, DataQualityIssue, MonthlyReport
 from app.services.attendance_analyzer import AttendanceAnalyzer
 from app.services.report_generator import ReportGenerator
-from api.routes import employees
-from core.config import settings
+from app.api.routes import employees
+from app.core.config import settings
 
 app = FastAPI(title="Office Attendance")
 
