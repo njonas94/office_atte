@@ -1,4 +1,33 @@
-FROM oracleinanutshell/oracle-instantclient:latest
+FROM container-registry.oracle.com/os/oraclelinux:7-slim
+
+# Instala herramientas necesarias
+RUN yum -y install oracle-release-el7 && \
+    yum -y install python3 python3-pip python3-devel gcc wget unzip libaio && \
+    yum clean all
+
+# Descarga e instala Oracle Instant Client
+WORKDIR /opt/oracle
+RUN wget https://download.oracle.com/otn_software/linux/instantclient/1919000/instantclient-basic-linux.x64-19.19.0.0.0dbru.zip \
+    && unzip instantclient-basic-linux.x64-19.19.0.0.0dbru.zip \
+    && rm instantclient-basic-linux.x64-19.19.0.0.0dbru.zip \
+    && mkdir -p /opt/oracle/instantclient/network/admin
+
+# Variables de entorno
+ENV LD_LIBRARY_PATH=/opt/oracle/instantclient_19_19:$LD_LIBRARY_PATH
+ENV TNS_ADMIN=/opt/oracle/instantclient/network/admin
+ENV PYTHONPATH="/app"
+
+# Directorio de trabajo
+WORKDIR /app
+
+COPY requirements.txt .
+RUN pip3 install --no-cache-dir -r requirements.txt
+
+COPY . .
+
+EXPOSE 8000
+
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
 
 # Instala Python y dependencias necesarias
 RUN apt-get update && apt-get install -y python3 python3-pip python3-dev gcc
