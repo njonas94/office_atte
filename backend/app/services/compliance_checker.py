@@ -36,15 +36,15 @@ class ComplianceChecker:
                     "details": {}
                 }
             
-            # Analizar cumplimiento
-            compliance_result = self._analyze_compliance(attendance_data, start_date, end_date)
+            # Analizar cumplimiento mensual
+            compliance_result = self._evaluate_monthly_compliance(attendance_data, start_date, end_date)
             
             return {
                 "employee_id": employee_id,
                 "period": f"{start_date.strftime('%Y-%m-%d')} a {end_date.strftime('%Y-%m-%d')}",
                 "compliance": compliance_result["overall_compliance"],
                 "reason": compliance_result["reason"],
-                "details": compliance_result["details"]
+                "monthly_results": compliance_result["monthly_results"]
             }
             
         except Exception as e:
@@ -241,13 +241,19 @@ class ComplianceChecker:
         total_days = len(daily_attendance)
         days_meeting_hours_list = []
         days_not_meeting_hours_list = []
+        detailed_hours_analysis = {}
         
         for date_str, day_records in daily_attendance.items():
-            if self._day_meets_minimum_hours(day_records):
+            hours_analysis = self._day_meets_minimum_hours(day_records)
+            
+            if hours_analysis["meets_minimum"]:
                 days_meeting_hours += 1
                 days_meeting_hours_list.append(date_str)
             else:
                 days_not_meeting_hours_list.append(date_str)
+            
+            # Guardar análisis detallado para cada día
+            detailed_hours_analysis[date_str] = hours_analysis
         
         min_days_required = 6  # Mínimo 6 días con 8+ horas
         compliant = days_meeting_hours >= min_days_required
@@ -266,6 +272,7 @@ class ComplianceChecker:
             "min_days_required": min_days_required,
             "days_meeting_hours_list": days_meeting_hours_list,
             "days_not_meeting_hours_list": days_not_meeting_hours_list,
+            "detailed_hours_analysis": detailed_hours_analysis,
             "reason": reason
         }
     
@@ -282,6 +289,8 @@ class ComplianceChecker:
             
             # Calcular horas trabajadas
             total_hours = 0
+            entries = []
+            exits = []
             
             for i in range(0, len(sorted_records) - 1, 2):
                 if i + 1 < len(sorted_records):
@@ -301,14 +310,37 @@ class ComplianceChecker:
                         logger.warning(f"Tipo de fecha de salida inválido: {type(exit_time)}")
                         continue
                     
+                    # Agregar a las listas de entradas y salidas
+                    entries.append(entry_time.strftime('%H:%M'))
+                    exits.append(exit_time.strftime('%H:%M'))
+                    
                     time_diff = exit_time - entry_time
                     total_hours += time_diff.total_seconds() / 3600  # Convertir a horas
             
-            return total_hours >= 8.0
+            meets_minimum = total_hours >= 8.0
+            
+            if meets_minimum:
+                reason = f"Cumple con {total_hours:.2f} horas (requeridas: 8.0)"
+            else:
+                reason = f"No cumple: {total_hours:.2f} horas (requeridas: 8.0)"
+            
+            return {
+                "meets_minimum": meets_minimum,
+                "total_hours": round(total_hours, 2),
+                "reason": reason,
+                "entries": entries,
+                "exits": exits
+            }
             
         except Exception as e:
             logger.error(f"Error calculando horas del día: {e}")
-            return False
+            return {
+                "meets_minimum": False,
+                "total_hours": 0,
+                "reason": f"Error en cálculo: {str(e)}",
+                "entries": [],
+                "exits": []
+            }
     
     def _count_weeks_in_period(self, start_date: datetime, end_date: datetime) -> int:
         """
@@ -330,6 +362,113 @@ class ComplianceChecker:
             # Fallback: calcular semanas aproximadas
             days_diff = (end_date - start_date).days
             return max(1, min(5, (days_diff // 7) + 1))
+    
+    def _split_period_into_months(self, start_date: datetime, end_date: datetime) -> List[Tuple[datetime, datetime]]:
+        """
+        Divide un período en meses individuales para evaluación mensual
+        """
+        months = []
+        current_date = start_date.replace(day=1)  # Empezar desde el primer día del mes
+        
+        while current_date <= end_date:
+            # Calcular el último día del mes actual
+            if current_date.month == 12:
+                next_month = current_date.replace(year=current_date.year + 1, month=1, day=1)
+            else:
+                next_month = current_date.replace(month=current_date.month + 1, day=1)
+            
+            month_end = next_month - timedelta(days=1)
+            
+            # Ajustar para no exceder el período original
+            month_start = max(current_date, start_date)
+            month_end = min(month_end, end_date)
+            
+            if month_start <= month_end:
+                months.append((month_start, month_end))
+            
+            current_date = next_month
+        
+        return months
+
+    def _evaluate_monthly_compliance(
+        self, 
+        attendance_data: List[Dict], 
+        start_date: datetime, 
+        end_date: datetime
+    ) -> Dict[str, Any]:
+        """
+        Evalúa el cumplimiento mes a mes en lugar de todo el período junto
+        """
+        months = self._split_period_into_months(start_date, end_date)
+        monthly_results = {}
+        overall_compliance = True
+        all_reasons = []
+        
+        for month_start, month_end in months:
+            month_key = month_start.strftime('%Y-%m')
+            
+            # Filtrar datos solo para este mes
+            month_data = [
+                record for record in attendance_data
+                if month_start <= record.get('FECHA_FICHADA') <= month_end
+            ]
+            
+            if not month_data:
+                # Mes sin datos
+                monthly_results[month_key] = {
+                    "compliant": False,
+                    "reason": "Sin datos de asistencia",
+                    "details": {
+                        "rule_1_minimum_days": {"compliant": False, "days_attended": 0, "min_required": 6},
+                        "rule_2_weekly_distribution": {"compliant": False, "weeks_with_attendance": 0, "min_weeks_required": 4},
+                        "rule_3_minimum_hours": {"compliant": False, "days_meeting_hours": 0, "min_days_required": 6}
+                    }
+                }
+                overall_compliance = False
+                all_reasons.append(f"{month_key}: Sin datos de asistencia")
+                continue
+            
+            # Agrupar por día para este mes
+            daily_attendance = self._group_by_day(month_data, month_start, month_end)
+            
+            # Evaluar reglas para este mes
+            rule_1_result = self._check_minimum_days(daily_attendance, len(month_data))
+            rule_2_result = self._check_weekly_distribution(daily_attendance, month_start, month_end)
+            rule_3_result = self._check_minimum_hours(daily_attendance)
+            
+            month_compliance = all([
+                rule_1_result["compliant"],
+                rule_2_result["compliant"],
+                rule_3_result["compliant"]
+            ])
+            
+            if not month_compliance:
+                overall_compliance = False
+                month_reasons = []
+                if not rule_1_result["compliant"]:
+                    month_reasons.append(f"Regla 1: {rule_1_result['reason']}")
+                if not rule_2_result["compliant"]:
+                    month_reasons.append(f"Regla 2: {rule_2_result['reason']}")
+                if not rule_3_result["compliant"]:
+                    month_reasons.append(f"Regla 3: {rule_3_result['reason']}")
+                all_reasons.append(f"{month_key}: {'; '.join(month_reasons)}")
+            
+            monthly_results[month_key] = {
+                "compliant": month_compliance,
+                "period": f"{month_start.strftime('%Y-%m-%d')} a {month_end.strftime('%Y-%m-%d')}",
+                "details": {
+                    "rule_1_minimum_days": rule_1_result,
+                    "rule_2_weekly_distribution": rule_2_result,
+                    "rule_3_minimum_hours": rule_3_result,
+                    "daily_attendance": daily_attendance
+                }
+            }
+        
+        return {
+            "overall_compliance": overall_compliance,
+            "monthly_results": monthly_results,
+            "reason": "Cumple con todas las reglas en todos los meses" if overall_compliance else "; ".join(all_reasons)
+        }
     
     async def check_multiple_employees_compliance(
         self, 

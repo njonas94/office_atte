@@ -78,9 +78,38 @@ const ComplianceChecker = () => {
 
   const handlePeriodChange = (newPeriod) => {
     setPeriod(newPeriod);
-    // Limpiar fechas personalizadas
-    setStartDate('');
-    setEndDate('');
+    
+    // Calcular fechas automáticamente para el período seleccionado
+    const today = new Date();
+    let startDate, endDate;
+    
+    switch (newPeriod) {
+      case 1: // Último mes
+        startDate = new Date(today.getFullYear(), today.getMonth() - 1, today.getDate());
+        endDate = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 1);
+        break;
+      case 3: // Últimos 3 meses
+        startDate = new Date(today.getFullYear(), today.getMonth() - 3, today.getDate());
+        endDate = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 1);
+        break;
+      case 6: // Últimos 6 meses
+        startDate = new Date(today.getFullYear(), today.getMonth() - 6, today.getDate());
+        endDate = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 1);
+        break;
+      case 12: // Último año
+        startDate = new Date(today.getFullYear() - 1, today.getMonth(), today.getDate());
+        endDate = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 1);
+        break;
+      default:
+        // Limpiar fechas para otros períodos
+        setStartDate('');
+        setEndDate('');
+        return;
+    }
+    
+    // Formatear fechas como YYYY-MM-DD
+    setStartDate(startDate.toISOString().split('T')[0]);
+    setEndDate(endDate.toISOString().split('T')[0]);
   };
 
   const checkCompliance = async () => {
@@ -186,27 +215,32 @@ const ComplianceChecker = () => {
           </div>
         </div>
 
-        <div className="custom-period">
-          <h4>Período Personalizado:</h4>
-          <div className="date-inputs">
-            <div>
-              <label>Fecha de inicio:</label>
-              <input
-                type="date"
-                value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
-              />
+                    <div className="custom-period">
+              <h4>Período Personalizado:</h4>
+              <div className="date-inputs">
+                <div>
+                  <label>Fecha de inicio:</label>
+                  <input
+                    type="date"
+                    value={startDate}
+                    onChange={(e) => setStartDate(e.target.value)}
+                  />
+                </div>
+                <div>
+                  <label>Fecha de fin:</label>
+                  <input
+                    type="date"
+                    value={endDate}
+                    onChange={(e) => setEndDate(e.target.value)}
+                  />
+                </div>
+              </div>
+              {startDate && endDate && (
+                <div className="period-info-display">
+                  <small>Período seleccionado: {startDate} a {endDate}</small>
+                </div>
+              )}
             </div>
-            <div>
-              <label>Fecha de fin:</label>
-              <input
-                type="date"
-                value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
-              />
-            </div>
-          </div>
-        </div>
       </div>
 
       {/* Botón de verificación */}
@@ -253,34 +287,73 @@ const ComplianceChecker = () => {
                   <p><strong>Razón:</strong> {result.reason}</p>
                 )}
                 
-                {result.details && (
-                  <div className="details-section">
-                    <h6>Detalles por Regla:</h6>
-                    <div className="rule-details">
-                      <div className="rule-detail">
-                        <strong>Regla 1 - Mínimo de días:</strong>
-                        <span className={result.details.rule_1_minimum_days?.compliant ? 'compliant' : 'non-compliant'}>
-                          {result.details.rule_1_minimum_days?.compliant ? '✓' : '✗'}
-                        </span>
-                        <p>{result.details.rule_1_minimum_days?.reason || 'Sin información'}</p>
+                {result.monthly_results && (
+                  <div className="monthly-details-section">
+                    <h6>Análisis Mensual Detallado:</h6>
+                    {Object.entries(result.monthly_results).map(([month, monthData]) => (
+                      <div key={month} className={`month-card ${monthData.compliant ? 'month-compliant' : 'month-non-compliant'}`}>
+                        <div className="month-header">
+                          <h6>{month}</h6>
+                          <span className={`month-status ${monthData.compliant ? 'compliant' : 'non-compliant'}`}>
+                            {monthData.compliant ? '✓ CUMPLE' : '✗ NO CUMPLE'}
+                          </span>
+                        </div>
+                        
+                        {monthData.details && (
+                          <div className="month-rule-details">
+                            <div className="rule-detail">
+                              <strong>Regla 1 - Mínimo de días:</strong>
+                              <span className={monthData.details.rule_1_minimum_days?.compliant ? 'compliant' : 'non-compliant'}>
+                                {monthData.details.rule_1_minimum_days?.compliant ? '✓' : '✗'}
+                              </span>
+                              <p>{monthData.details.rule_1_minimum_days?.reason || 'Sin información'}</p>
+                            </div>
+                            
+                            <div className="rule-detail">
+                              <strong>Regla 2 - Distribución semanal:</strong>
+                              <span className={monthData.details.rule_2_weekly_distribution?.compliant ? 'compliant' : 'non-compliant'}>
+                                {monthData.details.rule_2_weekly_distribution?.compliant ? '✓' : '✗'}
+                              </span>
+                              <p>{monthData.details.rule_2_weekly_distribution?.reason || 'Sin información'}</p>
+                            </div>
+                            
+                            <div className="rule-detail">
+                              <strong>Regla 3 - Horas mínimas:</strong>
+                              <span className={monthData.details.rule_3_minimum_hours?.compliant ? 'compliant' : 'non-compliant'}>
+                                {monthData.details.rule_3_minimum_hours?.compliant ? '✓' : '✗'}
+                              </span>
+                              <p>{monthData.details.rule_3_minimum_hours?.reason || 'Sin información'}</p>
+                              
+                              {/* Detalles de horas trabajadas por día */}
+                              {monthData.details.rule_3_minimum_hours?.detailed_hours_analysis && (
+                                <div className="hours-details">
+                                  <h6>Análisis detallado de horas por día:</h6>
+                                  {Object.entries(monthData.details.rule_3_minimum_hours.detailed_hours_analysis).map(([date, analysis]) => (
+                                    <div key={date} className={`day-hours ${analysis.meets_minimum ? 'meets-minimum' : 'does-not-meet'}`}>
+                                      <div className="day-header">
+                                        <strong>{date}</strong>
+                                        <span className={`hours-status ${analysis.meets_minimum ? 'compliant' : 'non-compliant'}`}>
+                                          {analysis.meets_minimum ? '✓' : '✗'}
+                                        </span>
+                                      </div>
+                                      <div className="hours-info">
+                                        <span className="hours-worked">{analysis.total_hours} horas</span>
+                                        <span className="hours-required">(requeridas: 8.0)</span>
+                                      </div>
+                                      <div className="schedule-info">
+                                        <span className="entries">Entradas: {analysis.entries.join(', ')}</span>
+                                        <span className="exits">Salidas: {analysis.exits.join(', ')}</span>
+                                      </div>
+                                      <div className="hours-reason">{analysis.reason}</div>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        )}
                       </div>
-                      
-                      <div className="rule-detail">
-                        <strong>Regla 2 - Distribución semanal:</strong>
-                        <span className={result.details.rule_2_weekly_distribution?.compliant ? 'compliant' : 'non-compliant'}>
-                          {result.details.rule_2_weekly_distribution?.compliant ? '✓' : '✗'}
-                        </span>
-                        <p>{result.details.rule_2_weekly_distribution?.reason || 'Sin información'}</p>
-                      </div>
-                      
-                      <div className="rule-detail">
-                        <strong>Regla 3 - Horas mínimas:</strong>
-                        <span className={result.details.rule_3_minimum_hours?.compliant ? 'compliant' : 'non-compliant'}>
-                          {result.details.rule_3_minimum_hours?.compliant ? '✓' : '✗'}
-                        </span>
-                        <p>{result.details.rule_3_minimum_hours?.reason || 'Sin información'}</p>
-                      </div>
-                    </div>
+                    ))}
                   </div>
                 )}
               </div>

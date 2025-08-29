@@ -366,3 +366,83 @@
     min-width: auto;
   }
 }
+
+.hours-reason {
+  font-size: 12px;
+  color: #6c757d;
+  font-style: italic;
+  padding: 5px;
+  background-color: #f8f9fa;
+  border-radius: 4px;
+}
+
+/* Estilos para análisis mensual detallado */
+.monthly-details-section {
+  margin-top: 20px;
+  padding: 20px;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  border: 1px solid #e9ecef;
+}
+
+.monthly-details-section h6 {
+  margin: 0 0 20px 0;
+  color: #495057;
+  font-size: 16px;
+  font-weight: 600;
+  text-align: center;
+}
+
+.month-card {
+  margin-bottom: 20px;
+  padding: 15px;
+  border-radius: 8px;
+  border: 1px solid #e9ecef;
+  background-color: white;
+}
+
+.month-card.month-compliant {
+  border-left: 4px solid #28a745;
+}
+
+.month-card.month-non-compliant {
+  border-left: 4px solid #dc3545;
+}
+
+.month-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.month-header h6 {
+  margin: 0;
+  color: #495057;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.month-status.compliant {
+  color: #28a745;
+  font-weight: bold;
+  font-size: 14px;
+  padding: 5px 10px;
+  background-color: #d4edda;
+  border-radius: 4px;
+}
+
+.month-status.non-compliant {
+  color: #dc3545;
+  font-weight: bold;
+  font-size: 14px;
+  padding: 5px 10px;
+  background-color: #f8d7da;
+  border-radius: 4px;
+}
+
+.month-rule-details {
+  margin-top: 15px;
+}
