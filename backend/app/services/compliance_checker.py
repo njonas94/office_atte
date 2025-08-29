@@ -210,14 +210,27 @@ class ComplianceChecker:
         total_weeks = self._count_weeks_in_period(start_date, end_date)
         min_weeks_required = 4  # Requerir asistencia en al menos 4 semanas
         
+        # Identificar semanas faltantes
+        all_weeks = set(range(1, total_weeks + 1))
+        missing_weeks = all_weeks - weeks_with_attendance
+        
         compliant = len(weeks_with_attendance) >= min_weeks_required
+        
+        # Crear mensaje más detallado
+        if not compliant and missing_weeks:
+            missing_weeks_str = ", ".join([f"semana {w}" for w in sorted(missing_weeks)])
+            reason = f"Se requiere asistencia en al menos {min_weeks_required} semana(s), se asistió en {len(weeks_with_attendance)} semana(s). Semanas faltantes: {missing_weeks_str}"
+        else:
+            reason = f"Se requiere asistencia en al menos {min_weeks_required} semana(s), se asistió en {len(weeks_with_attendance)} semana(s)"
         
         return {
             "compliant": compliant,
             "weeks_with_attendance": len(weeks_with_attendance),
             "total_weeks_in_period": total_weeks,
             "min_weeks_required": min_weeks_required,
-            "reason": f"Se requiere asistencia en al menos {min_weeks_required} semana(s), se asistió en {len(weeks_with_attendance)} semana(s)"
+            "weeks_attended_list": sorted(list(weeks_with_attendance)),
+            "missing_weeks": sorted(list(missing_weeks)),
+            "reason": reason
         }
     
     def _check_minimum_hours(self, daily_attendance: Dict[str, List[Dict]]) -> Dict[str, Any]:
@@ -226,20 +239,34 @@ class ComplianceChecker:
         """
         days_meeting_hours = 0
         total_days = len(daily_attendance)
+        days_meeting_hours_list = []
+        days_not_meeting_hours_list = []
         
-        for day_records in daily_attendance.values():
+        for date_str, day_records in daily_attendance.items():
             if self._day_meets_minimum_hours(day_records):
                 days_meeting_hours += 1
+                days_meeting_hours_list.append(date_str)
+            else:
+                days_not_meeting_hours_list.append(date_str)
         
         min_days_required = 6  # Mínimo 6 días con 8+ horas
         compliant = days_meeting_hours >= min_days_required
+        
+        # Crear mensaje más detallado
+        if not compliant and days_not_meeting_hours_list:
+            days_not_meeting_str = ", ".join(days_not_meeting_hours_list)
+            reason = f"Se requieren mínimo {min_days_required} días con 8+ horas, se cumplió en {days_meeting_hours} días. Días que no cumplen: {days_not_meeting_str}"
+        else:
+            reason = f"Se requieren mínimo {min_days_required} días con 8+ horas, se cumplió en {days_meeting_hours} días"
         
         return {
             "compliant": compliant,
             "days_meeting_hours": days_meeting_hours,
             "total_days": total_days,
             "min_days_required": min_days_required,
-            "reason": f"Se requieren mínimo {min_days_required} días con 8+ horas, se cumplió en {days_meeting_hours} días"
+            "days_meeting_hours_list": days_meeting_hours_list,
+            "days_not_meeting_hours_list": days_not_meeting_hours_list,
+            "reason": reason
         }
     
     def _day_meets_minimum_hours(self, day_records: List[Dict]) -> bool:
