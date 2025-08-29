@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import './App.css';
+import Header from './components/Header';
 import ComplianceChecker from './components/ComplianceChecker';
 
 // Configuración de la API
@@ -50,18 +51,13 @@ function App() {
 
   return (
     <div className="app">
-      <header className="header">
-        <h1>Dashboard de Asistencia</h1>
-        <p>Gestión de empleados y control de asistencia</p>
-      </header>
+      <Header />
       
       <main className="main">
         <section className="welcome-section">
           <h2>Bienvenido al Sistema de Verificación de Cumplimiento</h2>
           <p>Selecciona empleados y verifica su cumplimiento con las reglas de asistencia a la oficina</p>
         </section>
-
-
 
         {/* Componente de verificación de cumplimiento */}
         <ComplianceChecker />
