@@ -123,7 +123,7 @@ class DatabaseManager:
                CASE WHEN PRIORIDAD IS NULL THEN 0 ELSE PRIORIDAD END as PRIORIDAD,
                CASE WHEN IGNORAR IS NULL THEN 0 ELSE IGNORAR END as IGNORAR
         FROM CRONOS.FICHADA_PROCESO 
-        WHERE ID_PERSONA = :employee_id 
+        WHERE TO_NUMBER(ID_PERSONA) = :employee_id 
         AND TRUNC(FECHA_FICHADA) >= TRUNC(:start_date)
         AND TRUNC(FECHA_FICHADA) <= TRUNC(:end_date)
         AND (IGNORAR = 0 OR IGNORAR IS NULL)
@@ -176,7 +176,7 @@ class DatabaseManager:
         WHERE TRUNC(FECHA_FICHADA) >= TRUNC(:start_date)
         AND TRUNC(FECHA_FICHADA) <= TRUNC(:end_date)
         AND (IGNORAR = 0 OR IGNORAR IS NULL)
-        ORDER BY ID_PERSONA, FECHA_FICHADA
+        ORDER BY TO_NUMBER(ID_PERSONA), FECHA_FICHADA
         """
         
         try:
