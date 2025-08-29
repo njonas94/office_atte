@@ -2,6 +2,11 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import './App.css';
 
+// Configuración de la API
+const API_BASE_URL = process.env.NODE_ENV === 'production' 
+  ? 'http://localhost:8000' 
+  : '';
+
 function App() {
   const [employees, setEmployees] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -14,10 +19,11 @@ function App() {
   const fetchEmployees = async () => {
     try {
       setLoading(true);
-      const response = await axios.get('/api/employees');
+      const response = await axios.get(`${API_BASE_URL}/api/employees`);
       setEmployees(response.data);
       setError(null);
     } catch (err) {
+      console.error('Error fetching employees:', err);
       setError('Error al cargar empleados: ' + err.message);
     } finally {
       setLoading(false);
@@ -57,10 +63,8 @@ function App() {
               <p className="stat-number">{employees.length}</p>
             </div>
             <div className="stat-card">
-              <h3>Departamentos</h3>
-              <p className="stat-number">
-                {new Set(employees.map(emp => emp.DEPARTAMENTO)).size}
-              </p>
+              <h3>Total Empleados Activos</h3>
+              <p className="stat-number">{employees.length}</p>
             </div>
           </div>
         </section>
@@ -72,7 +76,6 @@ function App() {
               <div key={employee.ID_PERSONA} className="employee-card">
                 <h3>{employee.NOMBRE} {employee.APELLIDO}</h3>
                 <p><strong>ID:</strong> {employee.ID_PERSONA}</p>
-                <p><strong>Departamento:</strong> {employee.DEPARTAMENTO || 'N/A'}</p>
                 <p><strong>Email:</strong> {employee.EMAIL || 'N/A'}</p>
               </div>
             ))}

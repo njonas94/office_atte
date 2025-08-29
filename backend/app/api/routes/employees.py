@@ -14,7 +14,7 @@ async def search_personas(
     """
     Buscar personas por ID(s) y/o Apellido (parcial).
     """
-    query = "SELECT ID_PERSONA, NOMBRE, APELLIDO, DEPARTAMENTO, EMAIL FROM CRONOS.PERSONA WHERE 1=1"
+    query = "SELECT ID_PERSONA, NOMBRE, APELLIDO, EMAIL FROM CRONOS.PERSONA WHERE 1=1"
     params = {}
     if ids:
         query += " AND ID_PERSONA IN ({})".format(','.join([f":id{i}" for i in range(len(ids))]))

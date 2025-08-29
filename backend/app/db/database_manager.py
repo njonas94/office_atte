@@ -72,8 +72,8 @@ class DatabaseManager:
             return cached_data
         
         query = """
-        SELECT ID_PERSONA, NOMBRE, APELLIDO, DEPARTAMENTO, EMAIL
-        FROM CRONOS.EMPLEADOS 
+        SELECT ID_PERSONA, NOMBRE, APELLIDO, EMAIL
+        FROM CRONOS.PERSONA 
         ORDER BY APELLIDO, NOMBRE
         """
         
@@ -207,8 +207,8 @@ class DatabaseManager:
             return cached_data
         
         query = """
-        SELECT ID_PERSONA, NOMBRE, APELLIDO, DEPARTAMENTO, EMAIL
-        FROM CRONOS.EMPLEADOS 
+        SELECT ID_PERSONA, NOMBRE, APELLIDO, EMAIL
+        FROM CRONOS.PERSONA 
         WHERE ID_PERSONA = :employee_id
         """
         

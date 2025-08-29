@@ -92,7 +92,7 @@ REDIS_PORT=6379
 - `PRIORIDAD` (INT): Priority field (optional)
 - `IGNORAR` (INT): Flag to ignore records (0/NULL = include)
 
-#### CRONOS.EMPLEADOS (Employee table)
+#### CRONOS.PERSONA (Employee table)
 - `ID_PERSONA` (INT): Employee ID (Primary Key)
 - `NOMBRE` (VARCHAR): First Name
 - `APELLIDO` (VARCHAR): Last Name
