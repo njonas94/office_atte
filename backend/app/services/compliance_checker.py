@@ -208,7 +208,7 @@ class ComplianceChecker:
         
         # Calcular semanas en el período
         total_weeks = self._count_weeks_in_period(start_date, end_date)
-        min_weeks_required = max(1, total_weeks)  # Al menos 1 semana
+        min_weeks_required = 4  # Requerir asistencia en al menos 4 semanas
         
         compliant = len(weeks_with_attendance) >= min_weeks_required
         
@@ -292,7 +292,8 @@ class ComplianceChecker:
             days_diff = (end_date - start_date).days
             weeks_count = max(1, (days_diff // 7) + 1)
             
-            # Verificar que no exceda el máximo lógico (5 semanas máximo para un mes)
+            # Para un período de ~1 mes, típicamente hay 4-5 semanas
+            # Usamos 5 como máximo para mostrar información completa
             if weeks_count > 5:
                 weeks_count = 5
                 
