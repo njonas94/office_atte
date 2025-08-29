@@ -21,8 +21,16 @@ async def check_employee_compliance(
     try:
         # Calcular fechas si no se proporcionan
         if not start_date or not end_date:
-            end_date = datetime.now()
-            start_date = end_date - timedelta(days=30 * months)
+            today = datetime.now()
+            if months == 1:  # Mes en curso
+                start_date = today.replace(day=1)
+                end_date = today
+            elif months == 2:  # Mes anterior
+                start_date = (today.replace(day=1) - timedelta(days=1)).replace(day=1)
+                end_date = today.replace(day=1) - timedelta(days=1)
+            else:  # Otros períodos (3, 6, 12 meses)
+                end_date = today
+                start_date = end_date - timedelta(days=30 * months)
         else:
             start_date = datetime.strptime(start_date, "%Y-%m-%d")
             end_date = datetime.strptime(end_date, "%Y-%m-%d")
@@ -50,8 +58,16 @@ async def check_multiple_employees_compliance(
     try:
         # Calcular fechas si no se proporcionan
         if not start_date or not end_date:
-            end_date = datetime.now()
-            start_date = end_date - timedelta(days=30 * months)
+            today = datetime.now()
+            if months == 1:  # Mes en curso
+                start_date = today.replace(day=1)
+                end_date = today
+            elif months == 2:  # Mes anterior
+                start_date = (today.replace(day=1) - timedelta(days=1)).replace(day=1)
+                end_date = today.replace(day=1) - timedelta(days=1)
+            else:  # Otros períodos (3, 6, 12 meses)
+                end_date = today
+                start_date = end_date - timedelta(days=30 * months)
         else:
             start_date = datetime.strptime(start_date, "%Y-%m-%d")
             end_date = datetime.strptime(end_date, "%Y-%m-%d")
@@ -80,9 +96,14 @@ async def get_compliance_periods():
     return {
         "available_periods": [
             {
-                "name": "Último mes",
+                "name": "Mes en curso",
                 "months": 1,
-                "description": "Verificar cumplimiento del último mes calendario"
+                "description": "Verificar cumplimiento del mes actual (desde el día 1 hasta hoy)"
+            },
+            {
+                "name": "Mes anterior",
+                "months": 2,
+                "description": "Verificar cumplimiento del mes anterior completo"
             },
             {
                 "name": "Últimos 3 meses",

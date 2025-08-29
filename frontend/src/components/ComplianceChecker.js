@@ -85,7 +85,11 @@ const ComplianceChecker = () => {
     let startDate, endDate;
     
     switch (newPeriod) {
-      case 1: // Último mes (mes completo anterior)
+      case 1: // Mes en curso (desde el día 1 hasta hoy)
+        startDate = new Date(today.getFullYear(), today.getMonth(), 1); // Primer día del mes actual
+        endDate = today; // Hoy
+        break;
+      case 2: // Mes anterior (mes completo ya terminado)
         startDate = new Date(today.getFullYear(), today.getMonth() - 1, 1); // Primer día del mes anterior
         endDate = new Date(today.getFullYear(), today.getMonth(), 0); // Último día del mes anterior
         break;
