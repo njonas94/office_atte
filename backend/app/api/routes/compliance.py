@@ -231,3 +231,396 @@ async def test_compliance_logic(employee_id: int):
             "employee_id": employee_id,
             "traceback": str(e.__traceback__) if hasattr(e, '__traceback__') else "No traceback"
         }
+
+@router.get("/compliance/test-group-by-day/{employee_id}")
+async def test_group_by_day(employee_id: int):
+    """
+    Endpoint de prueba específico para el método _group_by_day
+    """
+    try:
+        from datetime import datetime, timedelta
+        from app.db.database_manager import DatabaseManager
+        
+        # Conectar a la base de datos
+        db_manager = DatabaseManager()
+        if not db_manager.connection:
+            await db_manager.connect()
+        
+        # Fechas de prueba
+        end_date = datetime.now()
+        start_date = end_date - timedelta(days=30)
+        
+        # Obtener datos de asistencia
+        attendance_data = await db_manager.get_employee_attendance(
+            employee_id, start_date, end_date
+        )
+        
+        # Probar el método _group_by_day paso a paso
+        daily_groups = {}
+        
+        for i, record in enumerate(attendance_data):
+            try:
+                # Mostrar información del registro
+                record_info = {
+                    "index": i,
+                    "record_keys": list(record.keys()),
+                    "fecha_fichada_type": type(record.get('FECHA_FICHADA')).__name__,
+                    "fecha_fichada_value": str(record.get('FECHA_FICHADA')),
+                    "id_persona_type": type(record.get('ID_PERSONA')).__name__,
+                    "id_persona_value": str(record.get('ID_PERSONA'))
+                }
+                
+                # Procesar fecha
+                fecha_fichada = record.get('FECHA_FICHADA')
+                if isinstance(fecha_fichada, str):
+                    fecha_fichada = datetime.strptime(fecha_fichada, '%Y-%m-%d %H:%M:%S')
+                elif not isinstance(fecha_fichada, datetime):
+                    record_info["error"] = f"Tipo de fecha inválido: {type(fecha_fichada)}"
+                    continue
+                
+                date_key = fecha_fichada.strftime('%Y-%m-%d')
+                
+                if date_key not in daily_groups:
+                    daily_groups[date_key] = []
+                
+                daily_groups[date_key].append(record)
+                record_info["processed"] = True
+                record_info["date_key"] = date_key
+                
+            except Exception as e:
+                record_info = {
+                    "index": i,
+                    "error": str(e),
+                    "error_type": type(e).__name__
+                }
+            
+            # Solo procesar los primeros 3 registros para diagnóstico
+            if i >= 2:
+                break
+        
+        return {
+            "employee_id": employee_id,
+            "total_records": len(attendance_data),
+            "processed_records": min(3, len(attendance_data)),
+            "daily_groups_count": len(daily_groups),
+            "daily_groups_keys": list(daily_groups.keys()),
+            "record_analysis": record_info
+        }
+        
+    except Exception as e:
+        return {
+            "error": str(e),
+            "error_type": type(e).__name__,
+            "employee_id": employee_id
+        }
+
+@router.get("/compliance/debug-sql/{employee_id}")
+async def debug_sql_query(employee_id: int):
+    """
+    Endpoint para debuggear la consulta SQL directamente
+    """
+    try:
+        from datetime import datetime, timedelta
+        import cx_Oracle
+        
+        # Conectar directamente a la base de datos
+        from app.db.database_manager import DatabaseManager
+        db_manager = DatabaseManager()
+        if not db_manager.connection:
+            await db_manager.connect()
+        
+        # Fechas de prueba
+        end_date = datetime.now()
+        start_date = end_date - timedelta(days=30)
+        
+        # Consulta SQL directa para debug
+        query = """
+        SELECT ID_PERSONA, FECHA_FICHADA, 
+               CASE WHEN PRIORIDAD IS NULL THEN 0 ELSE PRIORIDAD END as PRIORIDAD,
+               CASE WHEN IGNORAR IS NULL THEN 0 ELSE IGNORAR END as IGNORAR
+        FROM CRONOS.FICHADA_PROCESO 
+        WHERE ID_PERSONA = :employee_id 
+        AND FECHA_FICHADA >= :start_date
+        AND FECHA_FICHADA <= :end_date
+        AND (IGNORAR = 0 OR IGNORAR IS NULL)
+        ORDER BY FECHA_FICHADA
+        """
+        
+        try:
+            cursor = db_manager.connection.cursor()
+            
+            # Mostrar los tipos de datos que vamos a pasar
+            debug_info = {
+                "employee_id_type": type(employee_id).__name__,
+                "employee_id_value": employee_id,
+                "start_date_type": type(start_date).__name__,
+                "start_date_value": start_date.strftime('%Y-%m-%d'),
+                "end_date_type": type(end_date).__name__,
+                "end_date_value": end_date.strftime('%Y-%m-%d')
+            }
+            
+            # Ejecutar la consulta
+            cursor.execute(query, {
+                'employee_id': str(employee_id),
+                'start_date': start_date.strftime('%Y-%m-%d'),
+                'end_date': end_date.strftime('%Y-%m-%d')
+            })
+            
+            columns = [col[0] for col in cursor.description]
+            records = [dict(zip(columns, row)) for row in cursor.fetchall()]
+            
+            cursor.close()
+            
+            return {
+                "success": True,
+                "employee_id": employee_id,
+                "total_records": len(records),
+                "debug_info": debug_info,
+                "first_record": records[0] if records else None,
+                "columns": columns
+            }
+            
+        except Exception as e:
+            return {
+                "success": False,
+                "error": str(e),
+                "error_type": type(e).__name__,
+                "debug_info": debug_info,
+                "query": query
+            }
+        
+    except Exception as e:
+        return {
+            "error": str(e),
+            "error_type": type(e).__name__,
+            "employee_id": employee_id
+        }
+
+@router.get("/compliance/test-minimal/{employee_id}")
+async def test_minimal_query(employee_id: int):
+    """
+    Endpoint de prueba con consulta SQL mínima para identificar el problema
+    """
+    try:
+        from app.db.database_manager import DatabaseManager
+        db_manager = DatabaseManager()
+        if not db_manager.connection:
+            await db_manager.connect()
+        
+        # Probar consultas SQL paso a paso
+        tests = []
+        
+        # Test 1: Consulta básica sin WHERE
+        try:
+            cursor = db_manager.connection.cursor()
+            cursor.execute("SELECT COUNT(*) FROM CRONOS.FICHADA_PROCESO")
+            count = cursor.fetchone()[0]
+            cursor.close()
+            tests.append({"test": "count_all", "success": True, "result": count})
+        except Exception as e:
+            tests.append({"test": "count_all", "success": False, "error": str(e)})
+        
+        # Test 2: Consulta con ID_PERSONA simple
+        try:
+            cursor = db_manager.connection.cursor()
+            cursor.execute("SELECT ID_PERSONA FROM CRONOS.FICHADA_PROCESO WHERE ROWNUM <= 5")
+            records = cursor.fetchall()
+            cursor.close()
+            tests.append({"test": "simple_id_query", "success": True, "result": [str(r[0]) for r in records]})
+        except Exception as e:
+            tests.append({"test": "simple_id_query", "success": False, "error": str(e)})
+        
+        # Test 3: Consulta con fecha simple
+        try:
+            cursor = db_manager.connection.cursor()
+            cursor.execute("SELECT FECHA_FICHADA FROM CRONOS.FICHADA_PROCESO WHERE ROWNUM <= 3")
+            records = cursor.fetchall()
+            cursor.close()
+            tests.append({"test": "simple_date_query", "success": True, "result": [str(r[0]) for r in records]})
+        except Exception as e:
+            tests.append({"test": "simple_date_query", "success": False, "error": str(e)})
+        
+        return {
+            "employee_id": employee_id,
+            "tests": tests
+        }
+        
+    except Exception as e:
+        return {
+            "error": str(e),
+            "error_type": type(e).__name__,
+            "employee_id": employee_id
+        }
+
+@router.get("/compliance/test-working-query/{employee_id}")
+async def test_working_query(employee_id: int):
+    """
+    Endpoint de prueba usando la misma consulta que funciona en el endpoint simple
+    """
+    try:
+        from app.db.database_manager import DatabaseManager
+        db_manager = DatabaseManager()
+        if not db_manager.connection:
+            await db_manager.connect()
+        
+        # Usar la misma consulta que funciona en el endpoint simple
+        query = """
+        SELECT ID_PERSONA, FECHA_FICHADA, 
+               CASE WHEN PRIORIDAD IS NULL THEN 0 ELSE PRIORIDAD END as PRIORIDAD,
+               CASE WHEN IGNORAR IS NULL THEN 0 ELSE IGNORAR END as IGNORAR
+        FROM CRONOS.FICHADA_PROCESO 
+        WHERE ID_PERSONA = :employee_id 
+        AND ROWNUM <= 10
+        """
+        
+        try:
+            cursor = db_manager.connection.cursor()
+            cursor.execute(query, {'employee_id': str(employee_id)})
+            
+            columns = [col[0] for col in cursor.description]
+            records = [dict(zip(columns, row)) for row in cursor.fetchall()]
+            
+            cursor.close()
+            
+            return {
+                "success": True,
+                "employee_id": employee_id,
+                "total_records": len(records),
+                "first_record": records[0] if records else None,
+                "columns": columns
+            }
+            
+        except Exception as e:
+            return {
+                "success": False,
+                "error": str(e),
+                "error_type": type(e).__name__,
+                "query": query
+            }
+        
+    except Exception as e:
+        return {
+            "error": str(e),
+            "error_type": type(e).__name__,
+            "employee_id": employee_id
+        }
+
+@router.get("/compliance/test-basic-fields/{employee_id}")
+async def test_basic_fields(employee_id: int):
+    """
+    Endpoint de prueba usando solo campos básicos sin funciones CASE
+    """
+    try:
+        from app.db.database_manager import DatabaseManager
+        db_manager = DatabaseManager()
+        if not db_manager.connection:
+            await db_manager.connect()
+        
+        # Consulta SQL básica sin funciones CASE
+        query = """
+        SELECT ID_PERSONA, FECHA_FICHADA
+        FROM CRONOS.FICHADA_PROCESO 
+        WHERE ID_PERSONA = :employee_id 
+        AND ROWNUM <= 5
+        """
+        
+        try:
+            cursor = db_manager.connection.cursor()
+            cursor.execute(query, {'employee_id': str(employee_id)})
+            
+            columns = [col[0] for col in cursor.description]
+            records = [dict(zip(columns, row)) for row in cursor.fetchall()]
+            
+            cursor.close()
+            
+            return {
+                "success": True,
+                "employee_id": employee_id,
+                "total_records": len(records),
+                "first_record": records[0] if records else None,
+                "columns": columns
+            }
+            
+        except Exception as e:
+            return {
+                "success": False,
+                "error": str(e),
+                "error_type": type(e).__name__,
+                "query": query
+            }
+        
+    except Exception as e:
+        return {
+            "error": str(e),
+            "error_type": type(e).__name__,
+            "employee_id": employee_id
+        }
+
+@router.get("/compliance/test-final-query/{employee_id}")
+async def test_final_query(employee_id: int):
+    """
+    Endpoint de prueba final usando la consulta que debería funcionar
+    """
+    try:
+        from datetime import datetime, timedelta
+        from app.db.database_manager import DatabaseManager
+        db_manager = DatabaseManager()
+        if not db_manager.connection:
+            await db_manager.connect()
+        
+        # Fechas de prueba
+        end_date = datetime.now()
+        start_date = end_date - timedelta(days=30)
+        
+        # Consulta SQL final que debería funcionar
+        query = """
+        SELECT ID_PERSONA, FECHA_FICHADA, 
+               PRIORIDAD,
+               IGNORAR
+        FROM CRONOS.FICHADA_PROCESO 
+        WHERE ID_PERSONA = :employee_id 
+        AND FECHA_FICHADA >= TO_DATE(:start_date, 'DD-MON-YYYY')
+        AND FECHA_FICHADA <= TO_DATE(:end_date, 'DD-MON-YYYY')
+        AND (IGNORAR = 0 OR IGNORAR IS NULL)
+        ORDER BY FECHA_FICHADA
+        """
+        
+        try:
+            cursor = db_manager.connection.cursor()
+            cursor.execute(query, {
+                'employee_id': str(employee_id),
+                'start_date': start_date.strftime('%d-%b-%Y').upper(),
+                'end_date': end_date.strftime('%d-%b-%Y').upper()
+            })
+            
+            columns = [col[0] for col in cursor.description]
+            records = [dict(zip(columns, row)) for row in cursor.fetchall()]
+            
+            cursor.close()
+            
+            return {
+                "success": True,
+                "employee_id": employee_id,
+                "total_records": len(records),
+                "first_record": records[0] if records else None,
+                "columns": columns,
+                "start_date": start_date.strftime('%d-%b-%Y').upper(),
+                "end_date": end_date.strftime('%d-%b-%Y').upper()
+            }
+            
+        except Exception as e:
+            return {
+                "success": False,
+                "error": str(e),
+                "error_type": type(e).__name__,
+                "query": query,
+                "start_date": start_date.strftime('%d-%b-%Y').upper(),
+                "end_date": end_date.strftime('%d-%b-%Y').upper()
+            }
+        
+    except Exception as e:
+        return {
+            "error": str(e),
+            "error_type": type(e).__name__,
+            "employee_id": employee_id
+        }

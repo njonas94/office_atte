@@ -120,12 +120,11 @@ class DatabaseManager:
         
         query = """
         SELECT ID_PERSONA, FECHA_FICHADA, 
-               CASE WHEN PRIORIDAD IS NULL THEN 0 ELSE PRIORIDAD END as PRIORIDAD,
-               CASE WHEN IGNORAR IS NULL THEN 0 ELSE IGNORAR END as IGNORAR
+               PRIORIDAD,
+               IGNORAR
         FROM CRONOS.FICHADA_PROCESO 
-        WHERE TO_NUMBER(ID_PERSONA) = :employee_id 
-        AND TRUNC(FECHA_FICHADA) >= TRUNC(:start_date)
-        AND TRUNC(FECHA_FICHADA) <= TRUNC(:end_date)
+        WHERE ID_PERSONA = :employee_id 
+        AND ROWNUM <= 100
         AND (IGNORAR = 0 OR IGNORAR IS NULL)
         ORDER BY FECHA_FICHADA
         """
@@ -133,9 +132,9 @@ class DatabaseManager:
         try:
             cursor = self.connection.cursor()
             cursor.execute(query, {
-                'employee_id': employee_id,
-                'start_date': start_date,
-                'end_date': end_date
+                'employee_id': str(employee_id),
+                'start_date': start_date.strftime('%d-%b-%Y').upper(),
+                'end_date': end_date.strftime('%d-%b-%Y').upper()
             })
             
             columns = [col[0] for col in cursor.description]
@@ -170,20 +169,20 @@ class DatabaseManager:
         
         query = """
         SELECT ID_PERSONA, FECHA_FICHADA, 
-               CASE WHEN PRIORIDAD IS NULL THEN 0 ELSE PRIORIDAD END as PRIORIDAD,
-               CASE WHEN IGNORAR IS NULL THEN 0 ELSE IGNORAR END as IGNORAR
+               PRIORIDAD,
+               IGNORAR
         FROM CRONOS.FICHADA_PROCESO 
         WHERE TRUNC(FECHA_FICHADA) >= TRUNC(:start_date)
         AND TRUNC(FECHA_FICHADA) <= TRUNC(:end_date)
         AND (IGNORAR = 0 OR IGNORAR IS NULL)
-        ORDER BY TO_NUMBER(ID_PERSONA), FECHA_FICHADA
+        ORDER BY ID_PERSONA, FECHA_FICHADA
         """
         
         try:
             cursor = self.connection.cursor()
             cursor.execute(query, {
-                'start_date': start_date,
-                'end_date': end_date
+                'start_date': start_date.strftime('%d-%b-%Y').upper(),
+                'end_date': end_date.strftime('%d-%b-%Y').upper()
             })
             
             columns = [col[0] for col in cursor.description]
@@ -270,8 +269,8 @@ class DatabaseManager:
         try:
             cursor = self.connection.cursor()
             cursor.execute(query, {
-                'start_date': start_date,
-                'end_date': end_date
+                'start_date': start_date.strftime('%d-%b-%Y').upper(),
+                'end_date': end_date.strftime('%d-%b-%Y').upper()
             })
             
             columns = [col[0] for col in cursor.description]
