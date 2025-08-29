@@ -80,25 +80,26 @@ const ComplianceChecker = () => {
     setPeriod(newPeriod);
     
     // Calcular fechas automáticamente para el período seleccionado
+    // Considerando MESES COMPLETOS
     const today = new Date();
     let startDate, endDate;
     
     switch (newPeriod) {
-      case 1: // Último mes
-        startDate = new Date(today.getFullYear(), today.getMonth() - 1, today.getDate());
-        endDate = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 1);
+      case 1: // Último mes (mes completo anterior)
+        startDate = new Date(today.getFullYear(), today.getMonth() - 1, 1); // Primer día del mes anterior
+        endDate = new Date(today.getFullYear(), today.getMonth(), 0); // Último día del mes anterior
         break;
-      case 3: // Últimos 3 meses
-        startDate = new Date(today.getFullYear(), today.getMonth() - 3, today.getDate());
-        endDate = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 1);
+      case 3: // Últimos 3 meses (meses completos)
+        startDate = new Date(today.getFullYear(), today.getMonth() - 3, 1); // Primer día del mes hace 3 meses
+        endDate = new Date(today.getFullYear(), today.getMonth(), 0); // Último día del mes anterior
         break;
-      case 6: // Últimos 6 meses
-        startDate = new Date(today.getFullYear(), today.getMonth() - 6, today.getDate());
-        endDate = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 1);
+      case 6: // Últimos 6 meses (meses completos)
+        startDate = new Date(today.getFullYear(), today.getMonth() - 6, 1); // Primer día del mes hace 6 meses
+        endDate = new Date(today.getFullYear(), today.getMonth(), 0); // Último día del mes anterior
         break;
-      case 12: // Último año
-        startDate = new Date(today.getFullYear() - 1, today.getMonth(), today.getDate());
-        endDate = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 1);
+      case 12: // Último año (meses completos)
+        startDate = new Date(today.getFullYear() - 1, today.getMonth(), 1); // Primer día del mes hace 1 año
+        endDate = new Date(today.getFullYear(), today.getMonth(), 0); // Último día del mes anterior
         break;
       default:
         // Limpiar fechas para otros períodos

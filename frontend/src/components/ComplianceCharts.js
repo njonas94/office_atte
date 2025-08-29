@@ -41,9 +41,9 @@ const ComplianceCharts = ({ complianceResults, period }) => {
       {
         label: 'Empleados que cumplen',
         data: [
-          complianceResults.filter(r => r.details?.rule_1_minimum_days?.compliant).length,
-          complianceResults.filter(r => r.details?.rule_2_weekly_distribution?.compliant).length,
-          complianceResults.filter(r => r.details?.rule_3_minimum_hours?.compliant).length,
+          complianceResults.filter(r => r.monthly_results && Object.values(r.monthly_results).every(month => month.details?.rule_1_minimum_days?.compliant)).length,
+          complianceResults.filter(r => r.monthly_results && Object.values(r.monthly_results).every(month => month.details?.rule_2_weekly_distribution?.compliant)).length,
+          complianceResults.filter(r => r.monthly_results && Object.values(r.monthly_results).every(month => month.details?.rule_3_minimum_hours?.compliant)).length,
         ],
         backgroundColor: 'rgba(39, 174, 96, 0.8)',
         borderColor: 'rgba(39, 174, 96, 1)',
@@ -52,9 +52,9 @@ const ComplianceCharts = ({ complianceResults, period }) => {
       {
         label: 'Empleados que no cumplen',
         data: [
-          complianceResults.filter(r => !r.details?.rule_1_minimum_days?.compliant).length,
-          complianceResults.filter(r => !r.details?.rule_2_weekly_distribution?.compliant).length,
-          complianceResults.filter(r => !r.details?.rule_3_minimum_hours?.compliant).length,
+          complianceResults.filter(r => r.monthly_results && !Object.values(r.monthly_results).every(month => month.details?.rule_1_minimum_days?.compliant)).length,
+          complianceResults.filter(r => r.monthly_results && !Object.values(r.monthly_results).every(month => month.details?.rule_2_weekly_distribution?.compliant)).length,
+          complianceResults.filter(r => r.monthly_results && !Object.values(r.monthly_results).every(month => month.details?.rule_3_minimum_hours?.compliant)).length,
         ],
         backgroundColor: 'rgba(231, 76, 60, 0.8)',
         borderColor: 'rgba(231, 76, 60, 1)',
@@ -62,6 +62,9 @@ const ComplianceCharts = ({ complianceResults, period }) => {
       },
     ],
   };
+
+  // Nueva gráfica: Cumplimiento por meses
+  const monthlyComplianceData = generateMonthlyComplianceData(complianceResults);
 
   // Configuración de opciones para gráfica de barras
   const barOptions = {
@@ -90,6 +93,36 @@ const ComplianceCharts = ({ complianceResults, period }) => {
     },
   };
 
+  // Configuración para gráfica de cumplimiento mensual
+  const monthlyBarOptions = {
+    responsive: true,
+    plugins: {
+      legend: {
+        position: 'top',
+      },
+      title: {
+        display: true,
+        text: 'Cumplimiento por Mes',
+        font: {
+          size: 16,
+          weight: 'bold'
+        }
+      },
+    },
+    scales: {
+      y: {
+        beginAtZero: true,
+        max: 100,
+        ticks: {
+          stepSize: 20,
+          callback: function(value) {
+            return value + '%';
+          }
+        }
+      },
+    },
+  };
+
   // Configuración de opciones para gráfica de pastel
   const pieOptions = {
     responsive: true,
@@ -99,7 +132,7 @@ const ComplianceCharts = ({ complianceResults, period }) => {
       },
       title: {
         display: true,
-        text: 'Resumen General de Cumplimiento',
+        text: 'Distribución General de Cumplimiento',
         font: {
           size: 16,
           weight: 'bold'
@@ -108,26 +141,26 @@ const ComplianceCharts = ({ complianceResults, period }) => {
     },
   };
 
-  // Calcular estadísticas adicionales
+  // Calcular tasa de cumplimiento general
   const complianceRate = totalEmployees > 0 ? ((compliantEmployees / totalEmployees) * 100).toFixed(1) : 0;
-  
-  // Análisis por regla
+
+  // Estadísticas por regla
   const rule1Stats = {
-    compliant: complianceResults.filter(r => r.details?.rule_1_minimum_days?.compliant).length,
+    compliant: complianceResults.filter(r => r.monthly_results && Object.values(r.monthly_results).every(month => month.details?.rule_1_minimum_days?.compliant)).length,
     total: totalEmployees,
-    percentage: totalEmployees > 0 ? ((complianceResults.filter(r => r.details?.rule_1_minimum_days?.compliant).length / totalEmployees) * 100).toFixed(1) : 0
+    percentage: totalEmployees > 0 ? ((complianceResults.filter(r => r.monthly_results && Object.values(r.monthly_results).every(month => month.details?.rule_1_minimum_days?.compliant)).length / totalEmployees) * 100).toFixed(1) : 0
   };
 
   const rule2Stats = {
-    compliant: complianceResults.filter(r => r.details?.rule_2_weekly_distribution?.compliant).length,
+    compliant: complianceResults.filter(r => r.monthly_results && Object.values(r.monthly_results).every(month => month.details?.rule_2_weekly_distribution?.compliant)).length,
     total: totalEmployees,
-    percentage: totalEmployees > 0 ? ((complianceResults.filter(r => r.details?.rule_2_weekly_distribution?.compliant).length / totalEmployees) * 100).toFixed(1) : 0
+    percentage: totalEmployees > 0 ? ((complianceResults.filter(r => r.monthly_results && Object.values(r.monthly_results).every(month => month.details?.rule_2_weekly_distribution?.compliant)).length / totalEmployees) * 100).toFixed(1) : 0
   };
 
   const rule3Stats = {
-    compliant: complianceResults.filter(r => r.details?.rule_3_minimum_hours?.compliant).length,
+    compliant: complianceResults.filter(r => r.monthly_results && Object.values(r.monthly_results).every(month => month.details?.rule_3_minimum_hours?.compliant)).length,
     total: totalEmployees,
-    percentage: totalEmployees > 0 ? ((complianceResults.filter(r => r.details?.rule_3_minimum_hours?.compliant).length / totalEmployees) * 100).toFixed(1) : 0
+    percentage: totalEmployees > 0 ? ((complianceResults.filter(r => r.monthly_results && Object.values(r.monthly_results).every(month => month.details?.rule_3_minimum_hours?.compliant)).length / totalEmployees) * 100).toFixed(1) : 0
   };
 
   return (
@@ -167,6 +200,15 @@ const ComplianceCharts = ({ complianceResults, period }) => {
             <Bar data={ruleComplianceData} options={barOptions} />
           </div>
         </div>
+
+        {/* Nueva gráfica: Cumplimiento por meses */}
+        {monthlyComplianceData && monthlyComplianceData.labels.length > 1 && (
+          <div className="chart-section">
+            <div className="chart-wrapper">
+              <Bar data={monthlyComplianceData} options={monthlyBarOptions} />
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Análisis detallado por regla */}
@@ -216,5 +258,63 @@ const ComplianceCharts = ({ complianceResults, period }) => {
     </div>
   );
 };
+
+// Función para generar datos de cumplimiento mensual
+function generateMonthlyComplianceData(complianceResults) {
+  if (!complianceResults || complianceResults.length === 0) {
+    return null;
+  }
+
+  // Obtener todos los meses únicos de todos los empleados
+  const allMonths = new Set();
+  complianceResults.forEach(result => {
+    if (result.monthly_results) {
+      Object.keys(result.monthly_results).forEach(month => {
+        allMonths.add(month);
+      });
+    }
+  });
+
+  if (allMonths.size <= 1) {
+    return null; // Solo mostrar si hay más de un mes
+  }
+
+  const sortedMonths = Array.from(allMonths).sort();
+
+  // Calcular cumplimiento por mes
+  const monthlyCompliance = sortedMonths.map(month => {
+    let compliantCount = 0;
+    let totalCount = 0;
+
+    complianceResults.forEach(result => {
+      if (result.monthly_results && result.monthly_results[month]) {
+        totalCount++;
+        if (result.monthly_results[month].compliant) {
+          compliantCount++;
+        }
+      }
+    });
+
+    const percentage = totalCount > 0 ? (compliantCount / totalCount) * 100 : 0;
+    return {
+      month,
+      percentage: Math.round(percentage * 100) / 100
+    };
+  });
+
+  return {
+    labels: monthlyCompliance.map(item => item.month),
+    datasets: [
+      {
+        label: 'Porcentaje de Cumplimiento',
+        data: monthlyCompliance.map(item => item.percentage),
+        backgroundColor: 'rgba(54, 162, 235, 0.8)',
+        borderColor: 'rgba(54, 162, 235, 1)',
+        borderWidth: 2,
+        borderRadius: 4,
+      }
+    ]
+  };
+}
 
 export default ComplianceCharts;
