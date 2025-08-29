@@ -122,14 +122,17 @@ class DatabaseManager:
         SELECT ID_PERSONA, FECHA_FICHADA
         FROM CRONOS.FICHADA_PROCESO 
         WHERE ID_PERSONA = :employee_id 
-        AND ROWNUM <= 100
+        AND FECHA_FICHADA >= :start_date
+        AND FECHA_FICHADA <= :end_date
         ORDER BY FECHA_FICHADA
         """
         
         try:
             cursor = self.connection.cursor()
             cursor.execute(query, {
-                'employee_id': str(employee_id)
+                'employee_id': str(employee_id),
+                'start_date': start_date,
+                'end_date': end_date
             })
             
             columns = [col[0] for col in cursor.description]

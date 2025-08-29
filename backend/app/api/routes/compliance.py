@@ -615,3 +615,186 @@ async def test_final_query(employee_id: int):
             "error_type": type(e).__name__,
             "employee_id": employee_id
         }
+
+@router.get("/compliance/search-august-2025/{employee_id}")
+async def search_august_2025(employee_id: int):
+    """
+    Endpoint específico para buscar registros de agosto de 2025
+    """
+    try:
+        from app.db.database_manager import DatabaseManager
+        
+        db_manager = DatabaseManager()
+        if not db_manager.connection:
+            await db_manager.connect()
+        
+        # Buscar específicamente en agosto de 2025
+        query = """
+        SELECT ID_PERSONA, FECHA_FICHADA
+        FROM CRONOS.FICHADA_PROCESO 
+        WHERE ID_PERSONA = :employee_id 
+        AND EXTRACT(YEAR FROM FECHA_FICHADA) = 2025
+        AND EXTRACT(MONTH FROM FECHA_FICHADA) = 8
+        ORDER BY FECHA_FICHADA DESC
+        """
+        
+        try:
+            cursor = db_manager.connection.cursor()
+            cursor.execute(query, {
+                'employee_id': str(employee_id)
+            })
+            
+            columns = [col[0] for col in cursor.description]
+            records = [dict(zip(columns, row)) for row in cursor.fetchall()]
+            
+            cursor.close()
+            
+            # Analizar fechas encontradas
+            date_analysis = []
+            for i, record in enumerate(records):
+                fecha_fichada = record.get('FECHA_FICHADA')
+                
+                if isinstance(fecha_fichada, str):
+                    try:
+                        parsed_date = datetime.strptime(fecha_fichada, '%Y-%m-%d %H:%M:%S')
+                        date_analysis.append({
+                            "index": i,
+                            "original_date": fecha_fichada,
+                            "parsed_date": parsed_date.strftime('%Y-%m-%d %H:%M:%S'),
+                            "day": parsed_date.day,
+                            "hour": parsed_date.hour,
+                            "minute": parsed_date.minute
+                        })
+                    except Exception as e:
+                        date_analysis.append({
+                            "index": i,
+                            "original_date": fecha_fichada,
+                            "error": str(e)
+                        })
+                else:
+                    date_analysis.append({
+                        "index": i,
+                        "original_date": str(fecha_fichada),
+                        "type": type(fecha_fichada).__name__
+                    })
+            
+            return {
+                "success": True,
+                "employee_id": employee_id,
+                "year_search": 2025,
+                "month_search": 8,
+                "total_records_august_2025": len(records),
+                "date_analysis": date_analysis,
+                "query_used": query
+            }
+            
+        except Exception as e:
+            return {
+                "success": False,
+                "error": str(e),
+                "error_type": type(e).__name__,
+                "query": query
+            }
+        
+    except Exception as e:
+        return {
+            "error": str(e),
+            "error_type": type(e).__name__,
+            "employee_id": employee_id
+        }
+
+@router.get("/compliance/debug-step-by-step/{employee_id}")
+async def debug_step_by_step(employee_id: int):
+    """
+    Endpoint de debug paso a paso para analizar el proceso de cumplimiento
+    """
+    try:
+        from datetime import datetime, timedelta
+        from app.db.database_manager import DatabaseManager
+        from app.services.compliance_checker import ComplianceChecker
+        
+        db_manager = DatabaseManager()
+        if not db_manager.connection:
+            await db_manager.connect()
+        
+        # Fechas de prueba
+        end_date = datetime.now()
+        start_date = end_date - timedelta(days=30)
+        
+        # Paso 1: Obtener datos de asistencia
+        attendance_data = await db_manager.get_employee_attendance(
+            employee_id, start_date, end_date
+        )
+        
+        # Paso 2: Analizar los datos obtenidos
+        data_analysis = {
+            "total_records": len(attendance_data),
+            "first_5_records": [],
+            "date_types": [],
+            "date_range_check": []
+        }
+        
+        for i, record in enumerate(attendance_data[:5]):
+            fecha_fichada = record.get('FECHA_FICHADA')
+            
+            if isinstance(fecha_fichada, str):
+                try:
+                    parsed_date = datetime.strptime(fecha_fichada, '%Y-%m-%d %H:%M:%S')
+                    is_in_period = start_date <= parsed_date <= end_date
+                    data_analysis["first_5_records"].append({
+                        "index": i,
+                        "original": fecha_fichada,
+                        "parsed": parsed_date.strftime('%Y-%m-%d %H:%M:%S'),
+                        "is_in_period": is_in_period,
+                        "days_from_start": (parsed_date - start_date).days
+                    })
+                except Exception as e:
+                    data_analysis["first_5_records"].append({
+                        "index": i,
+                        "original": fecha_fichada,
+                        "error": str(e)
+                    })
+            else:
+                data_analysis["first_5_records"].append({
+                    "index": i,
+                    "original": str(fecha_fichada),
+                    "type": type(fecha_fichada).__name__,
+                    "is_in_period": "unknown"
+                })
+        
+        # Paso 3: Probar el agrupamiento por día
+        compliance_checker = ComplianceChecker(db_manager)
+        daily_attendance = compliance_checker._group_by_day(attendance_data, start_date, end_date)
+        
+        # Paso 4: Analizar el resultado del agrupamiento
+        grouping_analysis = {
+            "total_days_found": len(daily_attendance),
+            "day_keys": list(daily_attendance.keys()),
+            "records_per_day": {day: len(records) for day, records in daily_attendance.items()}
+        }
+        
+        return {
+            "success": True,
+            "employee_id": employee_id,
+            "period": {
+                "start": start_date.strftime('%Y-%m-%d %H:%M:%S'),
+                "end": end_date.strftime('%Y-%m-%d %H:%M:%S'),
+                "days": (end_date - start_date).days
+            },
+            "step_1_attendance_data": data_analysis,
+            "step_2_daily_grouping": grouping_analysis,
+            "debug_info": {
+                "start_date_type": type(start_date).__name__,
+                "end_date_type": type(end_date).__name__,
+                "attendance_data_type": type(attendance_data).__name__
+            }
+        }
+        
+    except Exception as e:
+        return {
+            "success": False,
+            "error": str(e),
+            "error_type": type(e).__name__,
+            "employee_id": employee_id,
+            "traceback": str(e.__traceback__) if hasattr(e, '__traceback__') else "No traceback"
+        }

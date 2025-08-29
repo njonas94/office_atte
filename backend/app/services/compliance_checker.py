@@ -64,7 +64,7 @@ class ComplianceChecker:
         daily_attendance = self._group_by_day(attendance_data, start_date, end_date)
         
         # Verificar reglas
-        rule_1_result = self._check_minimum_days(daily_attendance)
+        rule_1_result = self._check_minimum_days(daily_attendance, len(attendance_data))
         rule_2_result = self._check_weekly_distribution(daily_attendance, start_date, end_date)
         rule_3_result = self._check_minimum_hours(daily_attendance)
         
@@ -102,41 +102,66 @@ class ComplianceChecker:
         """
         Agrupa los registros de asistencia por día
         """
-        daily_groups = {}
+        from datetime import datetime  # Import al inicio del método
         
-        for record in attendance_data:
+        daily_groups = {}
+        total_records = len(attendance_data)
+        records_in_period = 0
+        records_outside_period = 0
+        records_processed = 0
+        
+        logger.info(f"DEBUG: Iniciando _group_by_day con {total_records} registros")
+        
+        for i, record in enumerate(attendance_data):
             try:
                 # Manejar diferentes tipos de fecha
                 fecha_fichada = record.get('FECHA_FICHADA')
-                if isinstance(fecha_fichada, str):
+                logger.debug(f"DEBUG: Procesando registro {i}, fecha: {fecha_fichada}, tipo: {type(fecha_fichada)}")
+                
+                # Si ya es un objeto datetime (Oracle nativo), usarlo directamente
+                if isinstance(fecha_fichada, datetime):
+                    logger.debug(f"DEBUG: Fecha ya es datetime: {fecha_fichada}")
+                    pass  # Ya es datetime, no hacer nada
+                elif isinstance(fecha_fichada, str):
                     # Si es string, convertir a datetime
-                    from datetime import datetime
                     fecha_fichada = datetime.strptime(fecha_fichada, '%Y-%m-%d %H:%M:%S')
-                elif not isinstance(fecha_fichada, datetime):
+                    logger.debug(f"DEBUG: Fecha convertida de string: {fecha_fichada}")
+                else:
                     # Si no es datetime válido, saltar este registro
-                    logger.warning(f"Fecha inválida en registro: {fecha_fichada}")
+                    logger.warning(f"Fecha inválida en registro: {fecha_fichada} (tipo: {type(fecha_fichada)})")
                     continue
                 
-                # Validar que la fecha esté dentro del período si se especifica
+                # Contar registros dentro y fuera del período para debugging
                 if start_date and end_date:
+                    logger.debug(f"DEBUG: Comparando fecha {fecha_fichada} con período {start_date} a {end_date}")
                     if fecha_fichada < start_date or fecha_fichada > end_date:
-                        logger.debug(f"Fecha fuera del período: {fecha_fichada}")
+                        records_outside_period += 1
+                        logger.debug(f"DEBUG: Fecha fuera del período: {fecha_fichada}")
                         continue
+                    else:
+                        records_in_period += 1
+                        logger.debug(f"DEBUG: Fecha dentro del período: {fecha_fichada}")
                 
                 date_key = fecha_fichada.strftime('%Y-%m-%d')
+                logger.debug(f"DEBUG: Clave de fecha generada: {date_key}")
                 
                 if date_key not in daily_groups:
                     daily_groups[date_key] = []
                 
                 daily_groups[date_key].append(record)
+                records_processed += 1
                 
             except Exception as e:
-                logger.warning(f"Error procesando fecha del registro: {e}")
+                logger.error(f"Error procesando fecha del registro {i}: {e}")
                 continue
+        
+        # Log para debugging
+        logger.info(f"DEBUG: Total registros: {total_records}, En período: {records_in_period}, Fuera período: {records_outside_period}, Procesados: {records_processed}")
+        logger.info(f"DEBUG: Días encontrados: {len(daily_groups)}, Claves: {list(daily_groups.keys())}")
         
         return daily_groups
     
-    def _check_minimum_days(self, daily_attendance: Dict[str, List[Dict]]) -> Dict[str, Any]:
+    def _check_minimum_days(self, daily_attendance: Dict[str, List[Dict]], total_records: int = 0) -> Dict[str, Any]:
         """
         Regla 1: Verificar mínimo 6 días al mes
         """
@@ -145,11 +170,18 @@ class ComplianceChecker:
         
         compliant = days_with_attendance >= min_required
         
+        # Crear mensaje más informativo
+        if total_records > 0 and days_with_attendance == 0:
+            reason = f"Se requieren mínimo {min_required} días, se asistió {days_with_attendance} días (Total registros: {total_records}, pero ninguno en el período especificado)"
+        else:
+            reason = f"Se requieren mínimo {min_required} días, se asistió {days_with_attendance} días"
+        
         return {
             "compliant": compliant,
             "days_attended": days_with_attendance,
             "min_required": min_required,
-            "reason": f"Se requieren mínimo {min_required} días, se asistió {days_with_attendance} días"
+            "total_records_available": total_records,
+            "reason": reason
         }
     
     def _check_weekly_distribution(
