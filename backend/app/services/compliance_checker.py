@@ -408,10 +408,17 @@ class ComplianceChecker:
             month_key = month_start.strftime('%Y-%m')
             
             # Filtrar datos solo para este mes
-            month_data = [
-                record for record in attendance_data
-                if month_start <= record.get('FECHA_FICHADA') <= month_end
-            ]
+            month_data = []
+            for record in attendance_data:
+                fecha_fichada = record.get('FECHA_FICHADA')
+                # Convertir string a datetime si es necesario
+                if isinstance(fecha_fichada, str):
+                    fecha_fichada = datetime.strptime(fecha_fichada, '%Y-%m-%d %H:%M:%S')
+                elif not isinstance(fecha_fichada, datetime):
+                    continue  # Saltar registros con fechas inválidas
+                
+                if month_start <= fecha_fichada <= month_end:
+                    month_data.append(record)
             
             if not month_data:
                 # Mes sin datos

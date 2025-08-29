@@ -345,10 +345,9 @@ const ComplianceChecker = () => {
                                         <span className="hours-worked">{analysis.total_hours} horas</span>
                                         <span className="hours-required">(requeridas: 8.0)</span>
                                       </div>
-                                      <div className="schedule-info">
-                                        <span className="entries">Entradas: {analysis.entries.join(', ')}</span>
-                                        <span className="exits">Salidas: {analysis.exits.join(', ')}</span>
-                                      </div>
+                                                                     <div className="schedule-info">
+                                 <span className="entries">Entradas: {analysis.entries.join(', ')}</span> <span className="exits">Salidas: {analysis.exits.join(', ')}</span>
+                               </div>
                                       <div className="hours-reason">{analysis.reason}</div>
                                     </div>
                                   ))}
