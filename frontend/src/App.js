@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import './App.css';
+import ComplianceChecker from './components/ComplianceChecker';
 
 // Configuración de la API
 const API_BASE_URL = process.env.NODE_ENV === 'production' 
@@ -55,32 +56,15 @@ function App() {
       </header>
       
       <main className="main">
-        <section className="stats-section">
-          <h2>Resumen General</h2>
-          <div className="stats-grid">
-            <div className="stat-card">
-              <h3>Total Empleados</h3>
-              <p className="stat-number">{employees.length}</p>
-            </div>
-            <div className="stat-card">
-              <h3>Total Empleados Activos</h3>
-              <p className="stat-number">{employees.length}</p>
-            </div>
-          </div>
+        <section className="welcome-section">
+          <h2>Bienvenido al Sistema de Verificación de Cumplimiento</h2>
+          <p>Selecciona empleados y verifica su cumplimiento con las reglas de asistencia a la oficina</p>
         </section>
 
-        <section className="employees-section">
-          <h2>Lista de Empleados</h2>
-          <div className="employees-grid">
-            {employees.map((employee) => (
-              <div key={employee.ID_PERSONA} className="employee-card">
-                <h3>{employee.NOMBRE} {employee.APELLIDO}</h3>
-                <p><strong>ID:</strong> {employee.ID_PERSONA}</p>
-                <p><strong>Email:</strong> {employee.EMAIL || 'N/A'}</p>
-              </div>
-            ))}
-          </div>
-        </section>
+
+
+        {/* Componente de verificación de cumplimiento */}
+        <ComplianceChecker />
       </main>
     </div>
   );

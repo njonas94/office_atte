@@ -119,11 +119,13 @@ class DatabaseManager:
             return cached_data
         
         query = """
-        SELECT ID_PERSONA, FECHA_FICHADA, PRIORIDAD, IGNORAR
+        SELECT ID_PERSONA, FECHA_FICHADA, 
+               CASE WHEN PRIORIDAD IS NULL THEN 0 ELSE PRIORIDAD END as PRIORIDAD,
+               CASE WHEN IGNORAR IS NULL THEN 0 ELSE IGNORAR END as IGNORAR
         FROM CRONOS.FICHADA_PROCESO 
         WHERE ID_PERSONA = :employee_id 
-        AND FECHA_FICHADA >= :start_date 
-        AND FECHA_FICHADA <= :end_date
+        AND TRUNC(FECHA_FICHADA) >= TRUNC(:start_date)
+        AND TRUNC(FECHA_FICHADA) <= TRUNC(:end_date)
         AND (IGNORAR = 0 OR IGNORAR IS NULL)
         ORDER BY FECHA_FICHADA
         """
@@ -167,10 +169,12 @@ class DatabaseManager:
             end_date = datetime(year, month + 1, 1) - timedelta(seconds=1)
         
         query = """
-        SELECT ID_PERSONA, FECHA_FICHADA, PRIORIDAD, IGNORAR
+        SELECT ID_PERSONA, FECHA_FICHADA, 
+               CASE WHEN PRIORIDAD IS NULL THEN 0 ELSE PRIORIDAD END as PRIORIDAD,
+               CASE WHEN IGNORAR IS NULL THEN 0 ELSE IGNORAR END as IGNORAR
         FROM CRONOS.FICHADA_PROCESO 
-        WHERE FECHA_FICHADA >= :start_date 
-        AND FECHA_FICHADA <= :end_date
+        WHERE TRUNC(FECHA_FICHADA) >= TRUNC(:start_date)
+        AND TRUNC(FECHA_FICHADA) <= TRUNC(:end_date)
         AND (IGNORAR = 0 OR IGNORAR IS NULL)
         ORDER BY ID_PERSONA, FECHA_FICHADA
         """

@@ -1,0 +1,368 @@
+.compliance-checker {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.compliance-checker h2 {
+  color: #2c3e50;
+  text-align: center;
+  margin-bottom: 30px;
+  font-size: 2rem;
+}
+
+/* Sección de reglas */
+.rules-section {
+  background: #f8f9fa;
+  padding: 20px;
+  border-radius: 8px;
+  margin-bottom: 30px;
+}
+
+.rules-section h3 {
+  color: #34495e;
+  margin-bottom: 20px;
+  font-size: 1.5rem;
+}
+
+.rules-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 20px;
+}
+
+.rule-card {
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  border-left: 4px solid #3498db;
+}
+
+.rule-card h4 {
+  color: #2c3e50;
+  margin-bottom: 10px;
+  font-size: 1.2rem;
+}
+
+.rule-card p {
+  color: #7f8c8d;
+  margin-bottom: 10px;
+  line-height: 1.5;
+}
+
+.rule-card strong {
+  color: #e74c3c;
+  font-size: 0.9rem;
+}
+
+/* Selección de empleados */
+.employee-selection {
+  background: #f8f9fa;
+  padding: 20px;
+  border-radius: 8px;
+  margin-bottom: 30px;
+}
+
+.employee-selection h3 {
+  color: #34495e;
+  margin-bottom: 20px;
+  font-size: 1.5rem;
+}
+
+.employees-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 15px;
+}
+
+.employee-checkbox {
+  display: flex;
+  align-items: center;
+  padding: 15px;
+  background: white;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: 2px solid transparent;
+}
+
+.employee-checkbox:hover {
+  border-color: #3498db;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.employee-checkbox.selected {
+  border-color: #27ae60;
+  background: #e8f5e8;
+}
+
+.employee-checkbox input[type="checkbox"] {
+  margin-right: 10px;
+  transform: scale(1.2);
+}
+
+.employee-checkbox span {
+  color: #2c3e50;
+  font-weight: 500;
+}
+
+/* Selección de período */
+.period-selection {
+  background: #f8f9fa;
+  padding: 20px;
+  border-radius: 8px;
+  margin-bottom: 30px;
+}
+
+.period-selection h3 {
+  color: #34495e;
+  margin-bottom: 20px;
+  font-size: 1.5rem;
+}
+
+.period-options h4,
+.custom-period h4 {
+  color: #2c3e50;
+  margin-bottom: 15px;
+  font-size: 1.2rem;
+}
+
+.period-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.period-buttons button {
+  padding: 10px 20px;
+  border: 2px solid #bdc3c7;
+  background: white;
+  color: #7f8c8d;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-weight: 500;
+}
+
+.period-buttons button:hover {
+  border-color: #3498db;
+  color: #3498db;
+}
+
+.period-buttons button.active {
+  background: #3498db;
+  border-color: #3498db;
+  color: white;
+}
+
+.custom-period {
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid #bdc3c7;
+}
+
+.date-inputs {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 20px;
+}
+
+.date-inputs div {
+  display: flex;
+  flex-direction: column;
+}
+
+.date-inputs label {
+  color: #2c3e50;
+  margin-bottom: 5px;
+  font-weight: 500;
+}
+
+.date-inputs input {
+  padding: 10px;
+  border: 2px solid #bdc3c7;
+  border-radius: 6px;
+  font-size: 1rem;
+}
+
+.date-inputs input:focus {
+  outline: none;
+  border-color: #3498db;
+}
+
+/* Botón de verificación */
+.check-button {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.primary-button {
+  padding: 15px 30px;
+  background: #27ae60;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  min-width: 200px;
+}
+
+.primary-button:hover:not(:disabled) {
+  background: #229954;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(39, 174, 96, 0.3);
+}
+
+.primary-button:disabled {
+  background: #bdc3c7;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* Mensajes de error */
+.error-message {
+  background: #f8d7da;
+  color: #721c24;
+  padding: 15px;
+  border-radius: 6px;
+  margin-bottom: 20px;
+  border: 1px solid #f5c6cb;
+  text-align: center;
+}
+
+/* Resultados de cumplimiento */
+.compliance-results {
+  background: #f8f9fa;
+  padding: 20px;
+  border-radius: 8px;
+}
+
+.compliance-results h3 {
+  color: #34495e;
+  margin-bottom: 20px;
+  font-size: 1.5rem;
+  text-align: center;
+}
+
+.result-card {
+  background: white;
+  padding: 25px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  border-left: 4px solid #bdc3c7;
+}
+
+.result-card.compliant {
+  border-left-color: #27ae60;
+  background: linear-gradient(135deg, #f8fff9 0%, #e8f5e8 100%);
+}
+
+.result-card.non-compliant {
+  border-left-color: #e74c3c;
+  background: linear-gradient(135deg, #fff8f8 0%, #f8e8e8 100%);
+}
+
+.result-card h4 {
+  color: #2c3e50;
+  margin-bottom: 15px;
+  font-size: 1.3rem;
+}
+
+.result-card p {
+  margin-bottom: 10px;
+  color: #34495e;
+}
+
+.status-compliant {
+  color: #27ae60;
+  font-weight: 600;
+  font-size: 1.1rem;
+}
+
+.status-non-compliant {
+  color: #e74c3c;
+  font-weight: 600;
+  font-size: 1.1rem;
+}
+
+/* Detalles de las reglas */
+.details-section {
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid #ecf0f1;
+}
+
+.details-section h5 {
+  color: #2c3e50;
+  margin-bottom: 15px;
+  font-size: 1.1rem;
+}
+
+.rule-details {
+  display: grid;
+  gap: 15px;
+}
+
+.rule-detail {
+  background: #f8f9fa;
+  padding: 15px;
+  border-radius: 6px;
+  border-left: 3px solid #bdc3c7;
+}
+
+.rule-detail strong {
+  color: #2c3e50;
+  display: block;
+  margin-bottom: 8px;
+}
+
+.rule-detail span.compliant {
+  color: #27ae60;
+  font-size: 1.2rem;
+  margin-left: 10px;
+}
+
+.rule-detail span.non-compliant {
+  color: #e74c3c;
+  font-size: 1.2rem;
+  margin-left: 10px;
+}
+
+.rule-detail p {
+  color: #7f8c8d;
+  margin-top: 8px;
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .compliance-checker {
+    padding: 15px;
+  }
+  
+  .rules-grid,
+  .employees-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .period-buttons {
+    flex-direction: column;
+  }
+  
+  .date-inputs {
+    grid-template-columns: 1fr;
+  }
+  
+  .primary-button {
+    width: 100%;
+    min-width: auto;
+  }
+}

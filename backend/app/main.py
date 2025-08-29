@@ -10,12 +10,13 @@ from app.db.database_manager import DatabaseManager
 from app.models.models import AttendanceStats, DataQualityIssue, MonthlyReport
 from app.services.attendance_analyzer import AttendanceAnalyzer
 from app.services.report_generator import ReportGenerator
-from app.api.routes import employees
+from app.api.routes import employees, compliance
 from app.core.config import settings
 
 app = FastAPI(title="Office Attendance")
 
 app.include_router(employees.router, prefix="/api", tags=["Employees"])
+app.include_router(compliance.router, prefix="/api", tags=["Compliance"])
 
 @app.get("/health")
 def health():
