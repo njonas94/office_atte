@@ -1,24 +1,36 @@
-# Use a Python slim image // prueba para el cambio
-FROM python:3.11-slim
+# Use Ubuntu base image for better Oracle Client compatibility
+FROM ubuntu:22.04
 
-# Install Oracle Instant Client dependencies
+# Prevent interactive prompts during package installation
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Install Python and Oracle Instant Client dependencies
 RUN apt-get update && apt-get install -y \
+    python3.11 \
+    python3.11-dev \
+    python3-pip \
     wget \
     unzip \
     gcc \
-    python3-dev \
+    libaio1 \
+    libaio-dev \
     && rm -rf /var/lib/apt/lists/*
+
+# Create symlink for python
+RUN ln -s /usr/bin/python3.11 /usr/bin/python
 
 # Download and install Oracle Instant Client
 WORKDIR /opt/oracle
-RUN wget https://download.oracle.com/otn_software/linux/instantclient/1919000/instantclient-basic-linux.x64-19.19.0.0.0dbru.zip \
+RUN wget --no-verbose https://download.oracle.com/otn_software/linux/instantclient/1919000/instantclient-basic-linux.x64-19.19.0.0.0dbru.zip \
     && unzip instantclient-basic-linux.x64-19.19.0.0.0dbru.zip \
     && rm instantclient-basic-linux.x64-19.19.0.0.0dbru.zip \
-    && mkdir -p /opt/oracle/instantclient/network/admin
+    && mkdir -p /opt/oracle/instantclient/network/admin \
+    && ln -s /opt/oracle/instantclient_19_19 /opt/oracle/instantclient
 
 # Set environment variables for the Oracle client
 ENV LD_LIBRARY_PATH=/opt/oracle/instantclient_19_19:$LD_LIBRARY_PATH
 ENV TNS_ADMIN=/opt/oracle/instantclient/network/admin
+ENV PATH=/opt/oracle/instantclient_19_19:$PATH
 
 # Set the working directory for your application
 WORKDIR /app
@@ -28,7 +40,10 @@ ENV PYTHONPATH=/app
 
 # Copy the requirements file and install dependencies
 COPY ./requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip3 install --no-cache-dir -r requirements.txt
+
+# Verify that schedule module is installed
+RUN python3 -c "import schedule; print('Schedule module installed successfully')"
 
 # Copy your application code
 COPY ./app ./app

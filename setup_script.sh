@@ -52,7 +52,14 @@ setup_directories() {
 setup_env() {
     if [ ! -f .env ]; then
         print_status "Creating environment file..."
-        cp .env.example .env
+        if [ -f .env.example ]; then
+            cp .env.example .env
+        elif [ -f backend/config.env.example ]; then
+            cp backend/config.env.example .env
+        else
+            print_error "No .env.example file found. Please create one manually."
+            exit 1
+        fi
         print_warning "Please edit .env file with your Oracle database credentials"
         print_warning "Configuration needed: ORACLE_HOST, ORACLE_USER, ORACLE_PASSWORD, etc."
     else

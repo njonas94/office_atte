@@ -4,14 +4,20 @@ services:
     ports:
       - "8000:8000"
     environment:
-      - ORACLE_USER=${ORACLE_USER}
-      - ORACLE_PASSWORD=${ORACLE_PASSWORD}
-      - ORACLE_HOST=${ORACLE_HOST}
-      - ORACLE_PORT=${ORACLE_PORT}
-      - ORACLE_SERVICE_NAME=${ORACLE_SERVICE_NAME}
+      - ORACLE_USER=${ORACLE_USER:-your_username}
+      - ORACLE_PASSWORD=${ORACLE_PASSWORD:-your_password}
+      - ORACLE_HOST=${ORACLE_HOST:-your_host}
+      - ORACLE_PORT=${ORACLE_PORT:-1521}
+      - ORACLE_SERVICE_NAME=${ORACLE_SERVICE_NAME:-your_service_name}
     depends_on:
       - redis
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
 
   frontend:
     build: ./frontend
@@ -20,24 +26,42 @@ services:
     depends_on:
       - backend
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
 
   redis:
     image: redis:7-alpine
     ports:
       - "6379:6379"
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
   scheduler:
     build: ./backend
     # This command now correctly points to the scheduler script
-    command: python /app/app/core/scheduler.py
+    command: python3 /app/app/core/scheduler.py
     environment:
-      - ORACLE_USER=${ORACLE_USER}
-      - ORACLE_PASSWORD=${ORACLE_PASSWORD}
-      - ORACLE_HOST=${ORACLE_HOST}
-      - ORACLE_PORT=${ORACLE_PORT}
-      - ORACLE_SERVICE_NAME=${ORACLE_SERVICE_NAME}
+      - ORACLE_USER=${ORACLE_USER:-your_username}
+      - ORACLE_PASSWORD=${ORACLE_PASSWORD:-your_password}
+      - ORACLE_HOST=${ORACLE_HOST:-your_host}
+      - ORACLE_PORT=${ORACLE_PORT:-1521}
+      - ORACLE_SERVICE_NAME=${ORACLE_SERVICE_NAME:-your_service_name}
     depends_on:
-      - redis
-      - backend
+      backend:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "pgrep", "-f", "scheduler.py"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
