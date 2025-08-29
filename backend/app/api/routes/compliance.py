@@ -336,12 +336,11 @@ async def debug_sql_query(employee_id: int):
         # Consulta SQL directa para debug
         query = """
         SELECT ID_PERSONA, FECHA_FICHADA, 
-               CASE WHEN PRIORIDAD IS NULL THEN 0 ELSE PRIORIDAD END as PRIORIDAD,
-               CASE WHEN IGNORAR IS NULL THEN 0 ELSE IGNORAR END as IGNORAR
+               PRIORIDAD,
+               IGNORAR
         FROM CRONOS.FICHADA_PROCESO 
         WHERE ID_PERSONA = :employee_id 
-        AND FECHA_FICHADA >= :start_date
-        AND FECHA_FICHADA <= :end_date
+        AND ROWNUM <= 100
         AND (IGNORAR = 0 OR IGNORAR IS NULL)
         ORDER BY FECHA_FICHADA
         """
@@ -361,9 +360,7 @@ async def debug_sql_query(employee_id: int):
             
             # Ejecutar la consulta
             cursor.execute(query, {
-                'employee_id': str(employee_id),
-                'start_date': start_date.strftime('%Y-%m-%d'),
-                'end_date': end_date.strftime('%Y-%m-%d')
+                'employee_id': str(employee_id)
             })
             
             columns = [col[0] for col in cursor.description]
@@ -572,25 +569,19 @@ async def test_final_query(employee_id: int):
         end_date = datetime.now()
         start_date = end_date - timedelta(days=30)
         
-        # Consulta SQL final que debería funcionar
+        # Consulta SQL final que debería funcionar - usando la misma que funciona
         query = """
-        SELECT ID_PERSONA, FECHA_FICHADA, 
-               PRIORIDAD,
-               IGNORAR
+        SELECT ID_PERSONA, FECHA_FICHADA
         FROM CRONOS.FICHADA_PROCESO 
         WHERE ID_PERSONA = :employee_id 
-        AND FECHA_FICHADA >= TO_DATE(:start_date, 'DD-MON-YYYY')
-        AND FECHA_FICHADA <= TO_DATE(:end_date, 'DD-MON-YYYY')
-        AND (IGNORAR = 0 OR IGNORAR IS NULL)
+        AND ROWNUM <= 100
         ORDER BY FECHA_FICHADA
         """
         
         try:
             cursor = db_manager.connection.cursor()
             cursor.execute(query, {
-                'employee_id': str(employee_id),
-                'start_date': start_date.strftime('%d-%b-%Y').upper(),
-                'end_date': end_date.strftime('%d-%b-%Y').upper()
+                'employee_id': str(employee_id)
             })
             
             columns = [col[0] for col in cursor.description]

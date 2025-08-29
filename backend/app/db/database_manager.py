@@ -119,22 +119,17 @@ class DatabaseManager:
             return cached_data
         
         query = """
-        SELECT ID_PERSONA, FECHA_FICHADA, 
-               PRIORIDAD,
-               IGNORAR
+        SELECT ID_PERSONA, FECHA_FICHADA
         FROM CRONOS.FICHADA_PROCESO 
         WHERE ID_PERSONA = :employee_id 
         AND ROWNUM <= 100
-        AND (IGNORAR = 0 OR IGNORAR IS NULL)
         ORDER BY FECHA_FICHADA
         """
         
         try:
             cursor = self.connection.cursor()
             cursor.execute(query, {
-                'employee_id': str(employee_id),
-                'start_date': start_date.strftime('%d-%b-%Y').upper(),
-                'end_date': end_date.strftime('%d-%b-%Y').upper()
+                'employee_id': str(employee_id)
             })
             
             columns = [col[0] for col in cursor.description]

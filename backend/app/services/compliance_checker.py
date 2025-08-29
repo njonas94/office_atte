@@ -61,7 +61,7 @@ class ComplianceChecker:
         Analiza los datos de asistencia para determinar cumplimiento
         """
         # Agrupar por día
-        daily_attendance = self._group_by_day(attendance_data)
+        daily_attendance = self._group_by_day(attendance_data, start_date, end_date)
         
         # Verificar reglas
         rule_1_result = self._check_minimum_days(daily_attendance)
@@ -98,7 +98,7 @@ class ComplianceChecker:
             }
         }
     
-    def _group_by_day(self, attendance_data: List[Dict]) -> Dict[str, List[Dict]]:
+    def _group_by_day(self, attendance_data: List[Dict], start_date: datetime = None, end_date: datetime = None) -> Dict[str, List[Dict]]:
         """
         Agrupa los registros de asistencia por día
         """
@@ -116,6 +116,12 @@ class ComplianceChecker:
                     # Si no es datetime válido, saltar este registro
                     logger.warning(f"Fecha inválida en registro: {fecha_fichada}")
                     continue
+                
+                # Validar que la fecha esté dentro del período si se especifica
+                if start_date and end_date:
+                    if fecha_fichada < start_date or fecha_fichada > end_date:
+                        logger.debug(f"Fecha fuera del período: {fecha_fichada}")
+                        continue
                 
                 date_key = fecha_fichada.strftime('%Y-%m-%d')
                 
@@ -158,9 +164,15 @@ class ComplianceChecker:
         weeks_with_attendance = set()
         
         for date_str in daily_attendance.keys():
-            date_obj = datetime.strptime(date_str, '%Y-%m-%d')
-            week_number = date_obj.isocalendar()[1]  # Número de semana del año
-            weeks_with_attendance.add(week_number)
+            try:
+                date_obj = datetime.strptime(date_str, '%Y-%m-%d')
+                # Calcular semana relativa al período en lugar de semana del año
+                days_since_start = (date_obj - start_date).days
+                week_number = (days_since_start // 7) + 1
+                weeks_with_attendance.add(week_number)
+            except Exception as e:
+                logger.warning(f"Error procesando fecha para distribución semanal: {e}")
+                continue
         
         # Calcular semanas en el período
         total_weeks = self._count_weeks_in_period(start_date, end_date)
@@ -244,20 +256,20 @@ class ComplianceChecker:
         Cuenta el número de semanas en un período
         """
         try:
-            current_date = start_date
-            weeks = set()
+            # Calcular semanas reales en el período
+            days_diff = (end_date - start_date).days
+            weeks_count = max(1, (days_diff // 7) + 1)
             
-            while current_date <= end_date:
-                week_info = current_date.isocalendar()
-                weeks.add(week_info[1])  # Número de semana del año
-                current_date += timedelta(days=1)
-            
-            return len(weeks)
+            # Verificar que no exceda el máximo lógico (5 semanas máximo para un mes)
+            if weeks_count > 5:
+                weeks_count = 5
+                
+            return weeks_count
         except Exception as e:
             logger.error(f"Error contando semanas: {e}")
             # Fallback: calcular semanas aproximadas
             days_diff = (end_date - start_date).days
-            return max(1, (days_diff // 7) + 1)
+            return max(1, min(5, (days_diff // 7) + 1))
     
     async def check_multiple_employees_compliance(
         self, 
